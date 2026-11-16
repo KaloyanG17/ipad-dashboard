@@ -33,7 +33,7 @@ export async function db(path, { method = 'GET', body, prefer } = {}) {
 export async function log(kind, name, dedupe) {
   if (!hasDb()) return;
   try {
-    await db('events?on_conflict=dedupe', { method: 'POST', body: { kind, name: String(name).slice(0, 120), dedupe: dedupe || null }, prefer: 'resolution=ignore-duplicates,return=minimal' });
+    await db('dash_events?on_conflict=dedupe', { method: 'POST', body: { kind, name: String(name).slice(0, 120), dedupe: dedupe || null }, prefer: 'resolution=ignore-duplicates,return=minimal' });
   } catch (e) {
     console.error('usage log failed:', e.message);
   }

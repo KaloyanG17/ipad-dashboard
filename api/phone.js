@@ -20,7 +20,7 @@ export async function GET(request) {
   if (!hasDb()) return fail('Phone status needs a database: SUPABASE_URL and SUPABASE_SECRET_KEY are not set', 503);
   try {
     const out = {};
-    for (const r of await db('state?select=key,value,at&key=like.phone.*')) out[r.key.slice(6)] = Object.assign({ at: Date.parse(r.at) }, r.value);
+    for (const r of await db('dash_state?select=key,value,at&key=like.phone.*')) out[r.key.slice(6)] = Object.assign({ at: Date.parse(r.at) }, r.value);
     return Response.json(out);
   } catch (e) {
     return fail(e);
@@ -34,7 +34,7 @@ export async function POST(request) {
   if (!rows) return fail('Send {"battery": 0-100, "charging": true/false} and/or {"event": "home" | "away"}', 400);
   try {
     const at = new Date().toISOString();
-    await db('state?on_conflict=key', { method: 'POST', body: rows.map((r) => Object.assign(r, { at })), prefer: 'resolution=merge-duplicates,return=minimal' });
+    await db('dash_state?on_conflict=key', { method: 'POST', body: rows.map((r) => Object.assign(r, { at })), prefer: 'resolution=merge-duplicates,return=minimal' });
     return Response.json({ ok: true });
   } catch (e) {
     return fail(e);

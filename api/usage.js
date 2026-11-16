@@ -31,7 +31,7 @@ export async function GET(request) {
   try {
     // shortcut: aggregates the last 30 days in JS, capped at 5000 events; move to a SQL view if you outgrow that.
     const since = new Date(Date.now() - 30 * DAY).toISOString();
-    const rows = await db('events?select=kind,name,at&at=gte.' + since + '&order=at.desc&limit=5000');
+    const rows = await db('dash_events?select=kind,name,at&at=gte.' + since + '&order=at.desc&limit=5000');
     return Response.json(aggregate(rows, Date.now()));
   } catch (e) {
     return fail(e);
