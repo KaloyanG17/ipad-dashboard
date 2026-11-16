@@ -3,3 +3,6 @@ dev.js
 test.js
 .env*
 .claude
+README.md
+LICENSE
+docs

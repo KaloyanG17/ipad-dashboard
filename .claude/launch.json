@@ -1,7 +1,0 @@
-{
-  "version": "0.0.1",
-  "configurations": [
-    { "name": "dashboard", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 3000 },
-    { "name": "dashboard-mock", "runtimeExecutable": "node", "runtimeArgs": ["--env-file-if-exists=.env.local", "dev.js"], "env": { "MOCK": "1", "PORT": "3001" }, "port": 3001 }
-  ]
-}

@@ -1,0 +1,91 @@
+# iPad Dashboard
+
+**Turning a 2013 iPad mini that Apple stopped updating years ago into a smart-home wall panel.**
+
+The iPad mini 2 is stuck on iOS 12 and Safari 12. Most modern web apps, and the official apps for my lights and music, no longer run on it. So I built a dashboard that does: it controls my Govee lights, browses and plays Spotify, and shows the weather and whether my websites are up. It runs fullscreen from the iPad's Home Screen, and the backend runs serverless on Vercel.
+
+![Dashboard](docs/dashboard.png)
+
+| Light themes | Spotify browser | Resizable layout |
+|---|---|---|
+| ![Govee scenes](docs/themes.png) | ![Spotify browse](docs/spotify-browse.png) | ![Edit layout](docs/edit-layout.png) |
+
+## Features
+
+- **Govee lights:** on/off, brightness, quick colours, any colour from a hue slider, warm/cool white, every built-in scene and your own DIY scenes, and all-on/all-off.
+- **Spotify:** now playing with album art and live progress, play/pause/skip, volume, shuffle, your playlists and Liked Songs, search, and moving playback between devices (phone, PC, Echo…).
+- **Weather:** current conditions plus a 5-day forecast from Open-Meteo, with no API key.
+- **Uptime:** a live up/down status and response time for any list of websites.
+- **Customisable layout:** move, resize and hide every card on the iPad itself. The layout is saved on the device, and cards hide their extras automatically when they get small.
+- **Generated background:** a landscape drawn entirely from text characters on a canvas, created procedurally with value noise, so there are no image assets.
+
+## How it works
+
+```mermaid
+flowchart LR
+  iPad["iPad mini 2<br/>Safari 12, fullscreen"] -- "x-dash-key" --> V["Vercel functions<br/>/api/govee · /api/spotify · /api/sites"]
+  iPad -- "no key needed" --> OM["Open-Meteo<br/>weather"]
+  V --> G["Govee Open API"]
+  V --> S["Spotify Web API"]
+  V --> W["Your websites"]
+```
+
+- **The page is one HTML file** with no framework and no build step. It's written in plain ES5 because Safari 12 can't run optional chaining, `??`, flexbox `gap` and similar newer features, and a single one of them breaks the whole page.
+- **Secrets never reach the browser.** The Govee key and the Spotify credentials live in Vercel environment variables. The iPad only talks to my own `/api/*` routes, which check a dashboard key before they control anything.
+- **Spotify uses OAuth with a refresh token.** A one-time `/api/spotify?login` flow produces it, and the server swaps it for short-lived access tokens and caches them.
+- **The Govee API is rate-limited per day**, so the device list and scene lists are cached, and light states are polled once a minute. After you change a light, the UI keeps its own value for a few seconds, because Govee still reports the old state briefly.
+- **Every action is checked on the server.** Spotify URIs, device IDs and Govee commands are matched against an allow-list before anything is sent upstream.
+- **Deployment:** pushing to `main` deploys to Vercel automatically.
+
+## Run it yourself
+
+### Try the UI with sample data (no accounts needed)
+
+```bash
+npm run mock
+```
+
+Open http://localhost:3000/?key=demo. Node 20 or newer is needed; there are no dependencies to install.
+
+### Set it up for real
+
+1. Fork this repo and import it into [Vercel](https://vercel.com/new).
+2. Add these environment variables in Vercel → Settings → Environment Variables:
+
+   | Variable | What it is |
+   |---|---|
+   | `DASH_KEY` | Any long random string. It's the password in your dashboard URL. |
+   | `GOVEE_API_KEY` | Govee Home app → Profile → ⚙ → Apply for API Key |
+   | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | From an app at developer.spotify.com. Set its redirect URI to `https://<your-site>/api/spotify` |
+   | `SPOTIFY_REFRESH_TOKEN` | Deploy once, open `https://<your-site>/api/spotify?login`, and paste the token it shows |
+   | `SITES` | Comma-separated URLs to monitor |
+
+3. Change `CITY` near the bottom of `index.html` to your city.
+4. On the iPad, open `https://<your-site>/?key=<DASH_KEY>` in Safari, then **Share → Add to Home Screen**. Turn Auto-Lock off, and use Guided Access to lock the iPad to the dashboard.
+
+Playback control needs Spotify Premium; now playing works on free accounts.
+
+### Local development
+
+```bash
+cp .env.example .env.local   # fill in your values
+npm run dev                  # http://localhost:3000/?key=<DASH_KEY>
+npm test                     # self-checks for the API validation
+```
+
+## Project structure
+
+```
+index.html        the whole dashboard: layout, UI, background renderer
+api/govee.js      lights: state, control, scenes
+api/spotify.js    playback, browsing, OAuth login
+api/sites.js      uptime checks
+api/_lib.js       shared dashboard-key check
+dev.js            local server that runs api/* like Vercel does (+ --mock sample data)
+test.js           assert-based self-checks
+local-claude/     the first version: a LAN-only dashboard for Claude Code token usage
+```
+
+## License
+
+[MIT](LICENSE)
