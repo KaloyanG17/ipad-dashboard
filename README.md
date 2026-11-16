@@ -4,11 +4,17 @@
 
 The iPad mini 2 is stuck on iOS 12 and Safari 12. Most modern web apps, and the official apps for my lights and music, no longer run on it. So I built a dashboard that does: it controls my Govee lights, browses and plays Spotify, and shows the weather and whether my websites are up. It runs fullscreen from the iPad's Home Screen, and the backend runs serverless on Vercel.
 
+### ▶ [Try the live demo](https://kaloyan-ipad.vercel.app/?demo)
+
+It runs on sample data: every button works, and nothing touches real devices.
+
 ![Dashboard](docs/dashboard.png)
 
-| Light themes | Spotify browser | Resizable layout |
+| Any colour, warm/cool white | Govee scenes | Resizable layout |
 |---|---|---|
-| ![Govee scenes](docs/themes.png) | ![Spotify browse](docs/spotify-browse.png) | ![Edit layout](docs/edit-layout.png) |
+| ![Colour picker](docs/colour.png) | ![Govee scenes](docs/themes.png) | ![Edit layout](docs/edit-layout.png) |
+| **Your playlists** | **Search** | **Move playback between devices** |
+| ![Spotify playlists](docs/spotify-browse.png) | ![Spotify search](docs/search.png) | ![Spotify devices](docs/devices.png) |
 
 ## Features
 
@@ -42,10 +48,10 @@ flowchart LR
 ### Try the UI with sample data (no accounts needed)
 
 ```bash
-npm run mock
+npm run dev
 ```
 
-Open http://localhost:3000/?key=demo. Node 20 or newer is needed; there are no dependencies to install.
+Open http://localhost:3000/?demo. Node 20 or newer is needed; there are no dependencies to install. Demo mode runs entirely in the page, so it works the same on the live site.
 
 ### Set it up for real
 
@@ -81,7 +87,7 @@ api/govee.js      lights: state, control, scenes
 api/spotify.js    playback, browsing, OAuth login
 api/sites.js      uptime checks
 api/_lib.js       shared dashboard-key check
-dev.js            local server that runs api/* like Vercel does (+ --mock sample data)
+dev.js            local server that runs api/* like Vercel does
 test.js           assert-based self-checks
 local-claude/     the first version: a LAN-only dashboard for Claude Code token usage
 ```
