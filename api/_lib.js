@@ -17,8 +17,20 @@ export function fail(e, status = 502) {
 // security on with no policies, so nothing but this server can read or write them.
 export const hasDb = () => !!(process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY);
 
+// A publishable/anon key looks like it works (reads just come back empty), so catch it by name.
+export function keyProblem(key) {
+  const k = String(key || '').trim();
+  let role = '';
+  if (k.startsWith('eyJ')) try { role = JSON.parse(Buffer.from(k.split('.')[1], 'base64url').toString()).role; } catch {}
+  if (k.startsWith('sb_publishable_') || role === 'anon') return 'SUPABASE_SECRET_KEY holds the publishable key. Paste the secret key instead (Supabase → Settings → API Keys → Secret keys).';
+  if (!k.startsWith('sb_secret_') && role !== 'service_role') return 'SUPABASE_SECRET_KEY does not look like a Supabase secret key (it should start with sb_secret_).';
+  return null;
+}
+
 export async function db(path, { method = 'GET', body, prefer } = {}) {
-  const key = process.env.SUPABASE_SECRET_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY.trim();
+  const problem = keyProblem(key);
+  if (problem) throw new Error(problem);
   const r = await fetch(process.env.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/' + path, {
     method,
     headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', ...(prefer ? { Prefer: prefer } : {}) },

@@ -66,3 +66,13 @@ assert.strictEqual(albumHost('A5xyzxyzxyzxyz'), 'p05-sharedstreams.icloud.com');
 assert.strictEqual(pick({ 342: { checksum: 'a', height: '342' }, 1536: { checksum: 'b', height: '1536' }, 2049: { checksum: 'c', height: '2049' } }).checksum, 'b');
 assert.strictEqual(pick({}), null);
 console.log('stats + phone + photos self-check ok');
+
+// Supabase key type check
+const { keyProblem } = await import('./api/_lib.js');
+const jwt = (role) => 'eyJhbGciOiJIUzI1NiJ9.' + Buffer.from(JSON.stringify({ role })).toString('base64url') + '.sig';
+assert.strictEqual(keyProblem('sb_secret_abc123'), null);
+assert.strictEqual(keyProblem(jwt('service_role')), null);
+assert.match(keyProblem('sb_publishable_abc123'), /publishable/);
+assert.match(keyProblem(jwt('anon')), /publishable/);
+assert.match(keyProblem('hello'), /does not look like/);
+console.log('key check ok');
