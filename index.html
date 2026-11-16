@@ -7,124 +7,189 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Home">
 <title>Home</title>
-<!-- Written for Safari 12 (iOS 12): plain ES5, no ?. / ??, no flex gap. -->
+<!-- Written for Safari 12 (iOS 12): plain ES5, no ?. / ??, no flex gap. CSS grid is fine. -->
 <style>
   html, body { margin: 0; height: 100%; background: #061a2e; color: #f4efe6; overflow: hidden;
     font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;
     -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
   #bg { position: fixed; left: 0; top: 0; width: 100%; height: 100%; }
-  .wrap { position: relative; height: 100%; box-sizing: border-box; padding: 24px 28px;
-    display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
   .row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+  .col { display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
   .grow { -webkit-flex: 1; flex: 1; min-width: 0; }
   .glass { background: rgba(6, 22, 40, 0.58); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
-    border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; padding: 16px 20px; box-sizing: border-box; }
+    border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; box-sizing: border-box; }
   .mono { font-family: Menlo, Courier, monospace; }
   .label { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(244, 239, 230, 0.62); }
   .dim { color: rgba(244, 239, 230, 0.62); }
-  .err { font-size: 14px; color: #ffb3a7; margin-top: 10px; }
+  .small { font-size: 13px; }
+  .err { font-size: 14px; color: #ffb3a7; margin-top: 8px; }
   .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .pill { display: inline-block; padding: 7px 13px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: 14px; margin: 0 6px 6px 0; }
+  .pill.on { background: #f2b04a; color: #1b1206; }
+  .pill:active, .btn:active, .item:active { opacity: .6; }
 
-  /* header */
-  header { -webkit-align-items: flex-start; align-items: flex-start; }
+  /* grid of resizable cards */
+  #grid { position: relative; height: 100%; box-sizing: border-box; padding: 20px 24px; display: -ms-grid; display: grid;
+    grid-template-columns: repeat(12, 1fr); grid-auto-rows: 1fr; grid-auto-flow: row dense; grid-gap: 14px; }
+  .card { position: relative; min-width: 0; min-height: 0; padding: 14px 18px; overflow: hidden; }
+  .card.bare { background: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 4px 6px; }
+
+  /* clock */
   #clock { font-size: 76px; font-weight: 200; line-height: 1; letter-spacing: -0.02em; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
   #date { margin-top: 8px; font-size: 18px; color: rgba(244,239,230,.85); text-shadow: 0 1px 8px rgba(0,0,0,.5); }
-  .weather { width: 470px; }
-  #wnow { -webkit-align-items: flex-end; align-items: flex-end; }
-  #wicon { font-size: 44px; line-height: 1; margin-right: 12px; }
-  #wtemp { font-size: 52px; font-weight: 200; line-height: 1; margin-right: 14px; }
-  #wdesc { font-size: 15px; line-height: 1.45; }
-  .days { margin-top: 12px; -webkit-justify-content: space-between; justify-content: space-between; }
-  .day { text-align: center; font-size: 13px; width: 20%; }
-  .day b { display: block; font-size: 22px; font-weight: normal; margin: 3px 0; }
+  .compact #clock { font-size: 48px; }
+  .compact #date { font-size: 14px; margin-top: 4px; }
 
-  /* main */
-  .main { margin-top: 16px; -webkit-flex: 1; flex: 1; min-height: 0; -webkit-align-items: stretch; align-items: stretch; }
-  .lights { margin-right: 16px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .light { padding: 12px 0; border-top: 1px solid rgba(255,255,255,.08); }
-  .light:first-of-type { border-top: 0; }
-  .lname { font-size: 18px; }
-  .lsub { font-size: 13px; margin-top: 2px; }
-  .switch { width: 58px; height: 34px; border-radius: 17px; background: rgba(255,255,255,.18); position: relative; -webkit-transition: background .2s; transition: background .2s; }
+  /* weather */
+  #wnow { -webkit-align-items: flex-end; align-items: flex-end; }
+  #wicon { font-size: 40px; line-height: 1; margin-right: 10px; }
+  #wtemp { font-size: 48px; font-weight: 200; line-height: 1; margin-right: 14px; }
+  #wdesc { font-size: 14px; line-height: 1.45; }
+  .days { margin-top: 10px; -webkit-justify-content: space-between; justify-content: space-between; }
+  .day { text-align: center; font-size: 13px; -webkit-flex: 1; flex: 1; }
+  .day b { display: block; font-size: 21px; font-weight: normal; margin: 3px 0; }
+  .compact .days, .compact #wmore { display: none; }
+
+  /* lights */
+  .light { padding: 10px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .light:first-child { border-top: 0; }
+  .lname { font-size: 17px; }
+  .switch { width: 58px; height: 34px; border-radius: 17px; background: rgba(255,255,255,.18); position: relative; -webkit-flex: none; flex: none; -webkit-transition: background .2s; transition: background .2s; }
   .switch i { position: absolute; left: 3px; top: 3px; width: 28px; height: 28px; border-radius: 50%; background: #fff; -webkit-transition: -webkit-transform .2s; transition: transform .2s; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
   .switch.on { background: #f2b04a; }
   .switch.on i { -webkit-transform: translateX(24px); transform: translateX(24px); }
   .off .lname, .off .sws, .off input { opacity: .45; }
-  input[type=range] { -webkit-appearance: none; width: 100%; height: 30px; background: transparent; margin: 8px 0 4px; }
+  .theme-btn { margin: 0 12px 0 0; }
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 30px; background: transparent; margin: 6px 0 2px; }
   input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.2); }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: #fff; margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+  input.hue::-webkit-slider-runnable-track { height: 14px; border-radius: 7px; background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+  input.temp::-webkit-slider-runnable-track { height: 14px; border-radius: 7px; background: linear-gradient(90deg, #ffb46b, #fff4e5, #cfe0ff); }
+  input.hue::-webkit-slider-thumb, input.temp::-webkit-slider-thumb { margin-top: -6px; }
   .sws { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
-  .sw { width: 34px; height: 34px; border-radius: 50%; margin: 4px 10px 0 0; border: 2px solid rgba(255,255,255,.25); box-sizing: border-box; }
+  .sw { width: 32px; height: 32px; border-radius: 50%; margin: 4px 10px 0 0; border: 2px solid rgba(255,255,255,.25); box-sizing: border-box; }
+  .compact .sws, .compact .light input { display: none; }
 
-  .music { width: 330px; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
-  #art { width: 112px; height: 112px; border-radius: 14px; background: rgba(255,255,255,.08) center / cover no-repeat; -webkit-flex: none; flex: none; margin-right: 14px; }
-  #title { font-size: 19px; margin-bottom: 4px; }
-  #artist { font-size: 14px; }
-  .track { height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); margin-top: 16px; overflow: hidden; }
+  /* music */
+  #art { width: 104px; height: 104px; border-radius: 14px; background: rgba(255,255,255,.08) center / cover no-repeat; -webkit-flex: none; flex: none; margin-right: 14px; }
+  #title { font-size: 18px; margin-bottom: 3px; }
+  .track { height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); margin-top: 12px; overflow: hidden; }
   #bar { height: 100%; width: 0; background: #f3a9bd; border-radius: 3px; }
-  .times { -webkit-justify-content: space-between; justify-content: space-between; font-size: 11px; margin-top: 6px; }
-  .controls { margin-top: auto; padding-top: 10px; -webkit-justify-content: space-around; justify-content: space-around; }
-  .btn { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.1); display: -webkit-flex; display: flex;
+  .times { -webkit-justify-content: space-between; justify-content: space-between; font-size: 11px; margin-top: 5px; }
+  .controls { margin-top: auto; padding-top: 6px; -webkit-justify-content: space-around; justify-content: space-around; }
+  .btn { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.1); display: -webkit-flex; display: flex; -webkit-flex: none; flex: none;
     -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
-  .btn.big { width: 78px; height: 78px; background: #f4efe6; }
-  .btn svg { width: 26px; height: 26px; fill: #f4efe6; }
-  .btn.big svg { width: 32px; height: 32px; fill: #0b2440; }
-  .btn:active { opacity: .6; }
+  .btn.big { width: 70px; height: 70px; background: #f4efe6; }
+  .btn.sm { width: 44px; height: 44px; }
+  .btn svg { width: 24px; height: 24px; fill: #f4efe6; }
+  .btn.sm svg { width: 20px; height: 20px; }
+  .btn.big svg { width: 30px; height: 30px; fill: #0b2440; }
+  .btn.on { background: #f2b04a; }
+  .btn.on svg { fill: #1b1206; }
+  .vol { margin-top: 4px; }
+  .vol svg { width: 18px; height: 18px; fill: rgba(244,239,230,.6); -webkit-flex: none; flex: none; margin-right: 10px; }
+  .compact #art, .compact .vol, .compact .times, .compact #device { display: none; }
+  .compact .track { margin-top: 6px; }
 
-  /* footer */
-  .sites { margin-top: 16px; padding: 12px 16px; }
-  #sites { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
-  .site { margin: 4px 18px 4px 0; font-size: 14px; }
+  /* sites */
+  .site { margin: 4px 18px 4px 0; font-size: 14px; white-space: nowrap; }
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #7ee2a8; margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 8px rgba(126,226,168,.7); }
   .dot.down { background: #ff7a7a; box-shadow: 0 0 8px rgba(255,122,122,.8); }
-  #keymsg { display: none; position: absolute; left: 50%; top: 50%; -webkit-transform: translate(-50%,-50%); transform: translate(-50%,-50%); width: 420px; text-align: center; }
+
+  /* layout editing */
+  #gear { position: fixed; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.08); z-index: 5;
+    display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
+  #gear svg { width: 18px; height: 18px; fill: rgba(244,239,230,.5); }
+  .edit { display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3; background: rgba(4,14,26,.72); border-radius: inherit;
+    -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center;
+    -webkit-align-content: center; align-content: center; padding: 4px; box-sizing: border-box; }
+  .editing .edit { display: -webkit-flex; display: flex; }
+  .editing #grid { padding-bottom: 76px; }
+  .editing .card { border: 2px dashed rgba(242,176,74,.7); }
+  .edit .name { font-size: 15px; margin: 0 10px 0 4px; white-space: nowrap; }
+  .edit .pill { margin: 3px; min-width: 22px; text-align: center; padding: 8px 11px; font-size: 13px; }
+  #editbar { display: none; position: fixed; left: 50%; bottom: 12px; -webkit-transform: translateX(-50%); transform: translateX(-50%); z-index: 6; padding: 10px 14px 4px; white-space: nowrap; }
+  .editing #editbar { display: block; }
+
+  /* sheets (full-screen panels for browsing music and light themes) */
+  #sheet { display: none; position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 10; background: rgba(2,8,16,.55); padding: 28px; box-sizing: border-box; }
+  #sheet.open { display: block; }
+  .sheet-in { height: 100%; padding: 18px 22px; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; background: rgba(6,22,40,.9); }
+  .sheet-title { font-size: 22px; margin-right: 14px; }
+  #tabs .pill { margin-bottom: 0; }
+  #sheetx { width: 44px; height: 44px; font-size: 22px; text-align: center; line-height: 44px; border-radius: 50%; background: rgba(255,255,255,.1); margin-left: 12px; }
+  #tools { margin-top: 14px; }
+  #tools input[type=search], #tools input[type=text] { -webkit-appearance: none; width: 100%; box-sizing: border-box; font-size: 17px; padding: 11px 16px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); color: #f4efe6; outline: none; -webkit-user-select: text; user-select: text; }
+  #sheetbody { margin-top: 12px; -webkit-flex: 1; flex: 1; min-height: 0; }
+  .item { padding: 9px 4px; border-bottom: 1px solid rgba(255,255,255,.07); }
+  .thumb { width: 46px; height: 46px; border-radius: 8px; background: rgba(255,255,255,.1) center / cover no-repeat; margin-right: 14px; -webkit-flex: none; flex: none; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-gap: 8px; }
+  .grid2 .pill { margin: 0; text-align: center; padding: 14px 8px; border-radius: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #toast { position: fixed; left: 50%; top: 18px; -webkit-transform: translateX(-50%); transform: translateX(-50%); z-index: 20; padding: 10px 18px; font-size: 15px; opacity: 0;
+    -webkit-transition: opacity .25s; transition: opacity .25s; pointer-events: none; }
+  #keymsg { display: none; position: fixed; left: 50%; top: 50%; -webkit-transform: translate(-50%,-50%); transform: translate(-50%,-50%); width: 420px; text-align: center; padding: 18px; z-index: 30; }
 </style>
 </head>
 <body>
 <canvas id="bg"></canvas>
-<div class="wrap">
-  <header class="row">
-    <div class="grow">
-      <div id="clock">--:--</div>
-      <div id="date"></div>
-    </div>
-    <div class="glass weather">
-      <div class="row" id="wnow">
-        <div id="wicon">·</div><div id="wtemp">--°</div>
-        <div id="wdesc" class="grow"><span id="wtext">Loading weather…</span><br><span class="dim" id="wmore"></span></div>
-      </div>
-      <div class="row days" id="days"></div>
-    </div>
-  </header>
 
-  <div class="row main">
-    <div class="glass grow lights">
-      <div class="label">Lights</div>
-      <div id="lights"><div class="dim" style="margin-top:12px">Loading…</div></div>
+<div id="grid">
+  <div class="card bare" id="card-clock">
+    <div id="clock">--:--</div>
+    <div id="date"></div>
+  </div>
+
+  <div class="card glass" id="card-weather">
+    <div class="row" id="wnow">
+      <div id="wicon">·</div><div id="wtemp">--°</div>
+      <div id="wdesc" class="grow"><span id="wtext">Loading weather…</span><br><span class="dim" id="wmore"></span></div>
     </div>
-    <div class="glass music">
-      <div class="label" style="margin-bottom:12px">Now playing</div>
-      <div class="row" style="-webkit-align-items:flex-start;align-items:flex-start">
-        <div id="art"></div>
-        <div class="grow"><div id="title" class="ellipsis">–</div><div id="artist" class="dim ellipsis"></div><div id="merr" class="err"></div></div>
-      </div>
-      <div class="track"><div id="bar"></div></div>
-      <div class="row times mono dim"><span id="pos">0:00</span><span id="dur">0:00</span></div>
-      <div class="row controls">
-        <div class="btn" data-a="previous"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></div>
-        <div class="btn big" id="pp" data-a="play"><svg viewBox="0 0 24 24"><path id="ppicon" d="M8 5v14l11-7z"/></svg></div>
-        <div class="btn" data-a="next"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></div>
-      </div>
+    <div class="row days" id="days"></div>
+  </div>
+
+  <div class="card glass col" id="card-lights">
+    <div class="row"><div class="label grow">Lights</div><span class="pill" id="allon">All on</span><span class="pill" id="alloff">All off</span></div>
+    <div id="lights" class="scroll grow"><div class="dim" style="margin-top:10px">Loading…</div></div>
+  </div>
+
+  <div class="card glass col" id="card-music">
+    <div class="row" style="margin-bottom:10px"><div class="label grow">Spotify</div><span class="pill" id="browse" style="margin:0">Browse</span></div>
+    <div class="row" style="-webkit-align-items:flex-start;align-items:flex-start">
+      <div id="art"></div>
+      <div class="grow"><div id="title" class="ellipsis">–</div><div id="artist" class="dim ellipsis"></div>
+        <div id="device" class="dim small ellipsis" style="margin-top:6px"></div><div id="merr" class="err"></div></div>
+    </div>
+    <div class="track"><div id="bar"></div></div>
+    <div class="row times mono dim"><span id="pos">0:00</span><span id="dur">0:00</span></div>
+    <div class="row vol"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg><input type="range" id="volume" min="0" max="100"></div>
+    <div class="row controls">
+      <div class="btn sm" id="shuffle"><svg viewBox="0 0 24 24"><path d="M10.6 9.2 5.4 4 4 5.4l5.2 5.2 1.4-1.4zM14.5 4l2 2L4 18.6 5.4 20 17.9 7.5l2 2V4h-5.4zm.3 9.4-1.4 1.4 3.1 3.1-2 2H20v-5.5l-2 2-3.2-3z"/></svg></div>
+      <div class="btn" data-a="previous"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></div>
+      <div class="btn big" id="pp" data-a="play"><svg viewBox="0 0 24 24"><path id="ppicon" d="M8 5v14l11-7z"/></svg></div>
+      <div class="btn" data-a="next"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></div>
+      <div class="btn sm" id="devbtn"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H4zM2 18h20v2H2z"/></svg></div>
     </div>
   </div>
 
-  <div class="glass sites row">
+  <div class="card glass row" id="card-sites" style="-webkit-flex-wrap:wrap;flex-wrap:wrap">
     <div class="label" style="margin-right:18px">Sites</div>
-    <div id="sites" class="row grow"><span class="dim">Loading…</span></div>
+    <div id="sites" class="row grow" style="-webkit-flex-wrap:wrap;flex-wrap:wrap"><span class="dim">Loading…</span></div>
   </div>
-
-  <div class="glass" id="keymsg">Add your dashboard key to the address:<br><span class="mono">…vercel.app/?key=YOUR_DASH_KEY</span></div>
 </div>
+
+<div id="gear"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1L11 21h4l.3-2.9c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5-2.1-1.6zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div>
+<div id="editbar" class="glass"></div>
+
+<div id="sheet"><div class="sheet-in glass">
+  <div class="row"><div class="sheet-title" id="sheettitle"></div><div class="row grow" id="tabs"></div><div id="sheetx">✕</div></div>
+  <div id="tools"></div>
+  <div id="sheetbody" class="scroll"></div>
+</div></div>
+
+<div id="toast" class="glass"></div>
+<div class="glass" id="keymsg">Add your dashboard key to the address:<br><span class="mono">…vercel.app/?key=YOUR_DASH_KEY</span></div>
 
 <script>
 // ===== Settings: change the city to yours =====
@@ -133,7 +198,10 @@ var CITY = 'Varna';
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function closest(el, cls, stop) { while (el && el !== stop) { if (el.classList && el.classList.contains(cls)) return el; el = el.parentNode; } return null; }
+  var toastT;
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(function () { t.style.opacity = 0; }, 2600); }
 
   // Key comes from ?key=… once, then is remembered. The URL keeps it too, so "Add to Home Screen" works.
   var m = /[?&]key=([^&]+)/.exec(location.search);
@@ -216,7 +284,112 @@ var CITY = 'Varna';
     }
   }
   drawBg();
-  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(drawBg, 300); });
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { drawBg(); markCompact(); }, 300); });
+
+  // ---------- Layout: card order, width (of 12 columns), height (rows) and visibility, saved on this device ----------
+  var NAMES = { clock: 'Clock', weather: 'Weather', lights: 'Lights', music: 'Spotify', sites: 'Sites' };
+  var DEFAULT = [{ id: 'clock', w: 5, h: 2 }, { id: 'weather', w: 7, h: 2 }, { id: 'lights', w: 7, h: 5 }, { id: 'music', w: 5, h: 5 }, { id: 'sites', w: 12, h: 1 }];
+  var layout;
+  try { layout = JSON.parse(localStorage.getItem('layout')); } catch (e) {}
+  if (!layout || layout.length !== DEFAULT.length) layout = JSON.parse(JSON.stringify(DEFAULT));
+
+  var grid = $('grid');
+  for (var li = 0; li < layout.length; li++) {
+    var ed = document.createElement('div');
+    ed.className = 'edit';
+    ed.setAttribute('data-id', layout[li].id);
+    ed.innerHTML = '<span class="name">' + NAMES[layout[li].id] + ' <span class="dim small"></span></span>' +
+      '<span class="pill" data-e="left">◀</span><span class="pill" data-e="right">▶</span>' +
+      '<span class="pill" data-e="w-">W−</span><span class="pill" data-e="w+">W+</span>' +
+      '<span class="pill" data-e="h-">H−</span><span class="pill" data-e="h+">H+</span>' +
+      '<span class="pill" data-e="hide">Hide</span>';
+    $('card-' + layout[li].id).appendChild(ed);
+  }
+
+  function markCompact() {
+    for (var i = 0; i < layout.length; i++) {
+      var el = $('card-' + layout[i].id);
+      el.classList.toggle('compact', el.offsetHeight < (layout[i].id === 'music' ? 300 : 160));
+    }
+  }
+  function applyLayout() {
+    localStorage.setItem('layout', JSON.stringify(layout));
+    for (var i = 0; i < layout.length; i++) {
+      var L = layout[i], el = $('card-' + L.id);
+      grid.appendChild(el); // re-appending in order sets the order
+      el.style.display = L.hidden ? 'none' : '';
+      el.style.gridColumn = 'span ' + L.w;
+      el.style.gridRow = 'span ' + L.h;
+      el.querySelector('.edit .dim').textContent = L.w + '×' + L.h;
+    }
+    var bar = '<span class="dim small" style="margin-right:8px">Hidden:</span>', any = false;
+    for (var k = 0; k < layout.length; k++) if (layout[k].hidden) { any = true; bar += '<span class="pill" data-show="' + k + '">+ ' + NAMES[layout[k].id] + '</span>'; }
+    if (!any) bar += '<span class="dim small" style="margin-right:12px">none</span>';
+    $('editbar').innerHTML = bar + '<span class="pill" data-reset="1">Reset</span><span class="pill on" data-done="1">Done</span>';
+    setTimeout(markCompact, 0);
+  }
+  applyLayout();
+
+  $('gear').addEventListener('click', function () { document.body.classList.toggle('editing'); });
+  grid.addEventListener('click', function (e) {
+    var act = e.target.getAttribute && e.target.getAttribute('data-e');
+    if (!act) return;
+    var id = closest(e.target, 'edit', grid).getAttribute('data-id'), i = 0;
+    while (layout[i].id !== id) i++;
+    var L = layout[i];
+    if (act === 'left' && i > 0) { layout.splice(i, 1); layout.splice(i - 1, 0, L); }
+    if (act === 'right' && i < layout.length - 1) { layout.splice(i, 1); layout.splice(i + 1, 0, L); }
+    if (act === 'w-') L.w = Math.max(2, L.w - 1);
+    if (act === 'w+') L.w = Math.min(12, L.w + 1);
+    if (act === 'h-') L.h = Math.max(1, L.h - 1);
+    if (act === 'h+') L.h = Math.min(8, L.h + 1);
+    if (act === 'hide') L.hidden = true;
+    applyLayout();
+  });
+  $('editbar').addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.getAttribute('data-show')) { layout[+t.getAttribute('data-show')].hidden = false; applyLayout(); }
+    if (t.getAttribute('data-reset')) { layout = JSON.parse(JSON.stringify(DEFAULT)); applyLayout(); }
+    if (t.getAttribute('data-done')) document.body.classList.remove('editing');
+  });
+
+  // ---------- Sheet: full-screen panel with tabs, a tools row and a scrolling list ----------
+  var sheet = { tabs: [], tab: null, render: null, items: [], onItem: null };
+  function openSheet(title, tabs, render) {
+    sheet.tabs = tabs; sheet.render = render;
+    $('sheettitle').textContent = title;
+    $('sheet').className = 'open';
+    showTab(tabs[0].id);
+  }
+  function showTab(id) {
+    sheet.tab = id;
+    var h = '';
+    for (var i = 0; i < sheet.tabs.length; i++) h += '<span class="pill' + (sheet.tabs[i].id === id ? ' on' : '') + '" data-tab="' + sheet.tabs[i].id + '">' + sheet.tabs[i].label + '</span>';
+    $('tabs').innerHTML = sheet.tabs.length > 1 ? h : '';
+    $('tools').innerHTML = '';
+    $('sheetbody').onclick = null;
+    sheet.items = []; sheet.onItem = null;
+    sheet.render(id);
+  }
+  function closeSheet() { $('sheet').className = ''; $('sheetbody').innerHTML = ''; if (document.activeElement) document.activeElement.blur(); }
+  function listItems(items, onItem, empty) {
+    sheet.items = items; sheet.onItem = onItem;
+    var h = '';
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      h += '<div class="item row" data-i="' + i + '">' + (it.img !== undefined ? '<div class="thumb" style="background-image:' + (it.img ? 'url(' + esc(it.img) + ')' : 'none') + '"></div>' : '') +
+        '<div class="grow"><div class="ellipsis">' + esc(it.name) + '</div>' + (it.sub ? '<div class="dim small ellipsis">' + esc(it.sub) + '</div>' : '') + '</div></div>';
+    }
+    $('sheetbody').innerHTML = h || '<div class="dim" style="padding:12px 4px">' + (empty || 'Nothing here') + '</div>';
+  }
+  function loading() { $('sheetbody').innerHTML = '<div class="dim" style="padding:12px 4px">Loading…</div>'; }
+  function sheetError(err) { $('sheetbody').innerHTML = '<div class="err" style="padding:8px 4px">' + esc(err) + '</div>'; }
+  $('sheetx').addEventListener('click', closeSheet);
+  $('tabs').addEventListener('click', function (e) { var t = e.target.getAttribute('data-tab'); if (t) showTab(t); });
+  $('sheetbody').addEventListener('click', function (e) {
+    var it = closest(e.target, 'item', $('sheetbody'));
+    if (it && sheet.onItem) sheet.onItem(sheet.items[+it.getAttribute('data-i')]);
+  });
 
   // ---------- Clock ----------
   var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -271,25 +444,33 @@ var CITY = 'Varna';
   // ---------- Govee lights ----------
   var SWATCHES = [['colorTemp', 2700, '#ffc27a'], ['colorTemp', 6500, '#eef3ff'], ['color', 0xff3b30, '#ff3b30'], ['color', 0xff9500, '#ff9500'],
     ['color', 0xffd60a, '#ffd60a'], ['color', 0x34c759, '#34c759'], ['color', 0x0a84ff, '#0a84ff'], ['color', 0xbf5af2, '#bf5af2'], ['color', 0xff2d92, '#ff2d92']];
+  var SW_HTML = '';
+  for (var s = 0; s < SWATCHES.length; s++) SW_HTML += '<span class="sw" data-s="' + s + '" style="background:' + SWATCHES[s][2] + '"></span>';
   var lights = [], hold = {}, dragging = false, box = $('lights');
+
+  function hueToRgb(h) { // full saturation and brightness; brightness has its own slider
+    var x = 1 - Math.abs((h / 60) % 2 - 1), r = 0, g = 0, b = 0;
+    if (h < 60) { r = 1; g = x; } else if (h < 120) { r = x; g = 1; } else if (h < 180) { g = 1; b = x; }
+    else if (h < 240) { g = x; b = 1; } else if (h < 300) { r = x; b = 1; } else { r = 1; b = x; }
+    return (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
+  }
 
   function renderLights() {
     if (box.children.length !== lights.length || !box.querySelector('.light')) {
-      var sw = '';
-      for (var s = 0; s < SWATCHES.length; s++) sw += '<span class="sw" data-s="' + s + '" style="background:' + SWATCHES[s][2] + '"></span>';
       var html = '';
       for (var i = 0; i < lights.length; i++) {
         html += '<div class="light" data-i="' + i + '"><div class="row"><div class="grow"><div class="lname ellipsis">' + esc(lights[i].name) +
-          '</div><div class="lsub dim"></div></div><div class="switch"><i></i></div></div>' +
-          '<input type="range" min="1" max="100"><div class="row sws">' + sw + '</div></div>';
+          '</div><div class="lsub dim small"></div></div><span class="pill theme-btn" data-theme="1">Themes</span><div class="switch"><i></i></div></div>' +
+          '<input type="range" min="1" max="100"><div class="row sws">' + SW_HTML + '</div></div>';
       }
-      box.innerHTML = html || '<div class="dim" style="margin-top:12px">No Govee lights found on this account</div>';
+      box.innerHTML = html || '<div class="dim" style="margin-top:10px">No Govee lights found on this account</div>';
     }
+    $('allon').style.display = $('alloff').style.display = lights.length > 1 ? '' : 'none';
     for (var k = 0; k < lights.length; k++) {
       var L = lights[k], el = box.children[k];
       el.className = 'light' + (L.on ? '' : ' off');
       el.querySelector('.switch').className = 'switch' + (L.on ? ' on' : '');
-      el.querySelector('.lsub').textContent = !L.online ? 'Offline' : L.on ? 'On' + (L.brightness ? ' · ' + L.brightness + '%' : '') : 'Off';
+      el.querySelector('.lsub').textContent = !L.online ? 'Offline' : L.on ? 'On' + (L.brightness ? ' · ' + L.brightness + '%' : '') + (L.scene ? ' · ' + L.scene : '') : 'Off';
       if (!dragging && L.brightness) el.querySelector('input').value = L.brightness;
     }
   }
@@ -302,34 +483,79 @@ var CITY = 'Varna';
       for (var i = 0; i < d.length; i++) {
         var old = hold[d[i].device] && hold[d[i].device] > now && lights[i];
         if (old && old.device === d[i].device) d[i] = old;
+        else if (lights[i] && lights[i].device === d[i].device) d[i].scene = lights[i].scene;
       }
       lights = d; renderLights();
     });
   }
-  function control(L, action, value) {
+  function control(L, action, value, label) {
     hold[L.device] = Date.now() + 10000;
+    if (action !== 'power' && action !== 'brightness') L.scene = label || '';
+    if (action !== 'power' && !L.on) L.on = true;
+    renderLights();
     api('POST', '/api/govee', { sku: L.sku, device: L.device, action: action, value: value }, function (err) {
-      if (err) { hold[L.device] = 0; alert(err); loadLights(); }
+      if (err) { hold[L.device] = 0; toast(err); loadLights(); }
+      else if (label) toast(L.name + ': ' + label);
     });
   }
-  function lightOf(el) { while (el && el !== box) { if (el.getAttribute('data-i')) return lights[+el.getAttribute('data-i')]; el = el.parentNode; } }
+  function lightOf(el) { var row = closest(el, 'light', box); return row ? lights[+row.getAttribute('data-i')] : null; }
   box.addEventListener('click', function (e) {
     var L = lightOf(e.target); if (!L) return;
-    if (e.target.closest('.switch')) { L.on = !L.on; control(L, 'power', L.on ? 1 : 0); renderLights(); }
+    if (closest(e.target, 'switch', box)) { L.on = !L.on; control(L, 'power', L.on ? 1 : 0); }
+    if (e.target.getAttribute('data-theme')) openLightSheet(L);
     var s = e.target.getAttribute('data-s');
-    if (s !== null) { var sw = SWATCHES[+s]; if (!L.on) { L.on = true; renderLights(); } control(L, sw[0], sw[1]); }
+    if (s !== null) { var sw = SWATCHES[+s]; control(L, sw[0], sw[1]); }
   });
   box.addEventListener('touchstart', function (e) { if (e.target.type === 'range') dragging = true; });
   box.addEventListener('mousedown', function (e) { if (e.target.type === 'range') dragging = true; });
   box.addEventListener('change', function (e) {
     if (e.target.type !== 'range') return;
     dragging = false;
-    var L = lightOf(e.target); L.brightness = +e.target.value; control(L, 'brightness', L.brightness); renderLights();
+    var L = lightOf(e.target); L.brightness = +e.target.value; control(L, 'brightness', L.brightness);
   });
+  function allLights(on) { for (var i = 0; i < lights.length; i++) if (lights[i].online) { lights[i].on = on; control(lights[i], 'power', on ? 1 : 0); } }
+  $('allon').addEventListener('click', function () { allLights(true); });
+  $('alloff').addEventListener('click', function () { allLights(false); });
+
+  function openLightSheet(L) {
+    var scenes = null;
+    openSheet(L.name, [{ id: 'colour', label: 'Colour' }, { id: 'scene', label: 'Scenes' }, { id: 'diyScene', label: 'My DIY' }], function (tab) {
+      if (tab === 'colour') {
+        $('sheetbody').innerHTML =
+          '<div class="label" style="margin-top:6px">Any colour</div><input type="range" class="hue" min="0" max="359" value="200" id="hue">' +
+          '<div class="label" style="margin-top:18px">White: warm → cool</div><input type="range" class="temp" min="2700" max="6500" step="100" value="4000" id="temp">' +
+          '<div class="label" style="margin-top:18px">Brightness</div><input type="range" min="1" max="100" value="' + (L.brightness || 100) + '" id="sbright">' +
+          '<div class="label" style="margin-top:18px">Quick colours</div><div class="row sws" id="ssw">' + SW_HTML + '</div>';
+        $('hue').addEventListener('change', function () { control(L, 'color', hueToRgb(+this.value), 'Custom colour'); });
+        $('temp').addEventListener('change', function () { control(L, 'colorTemp', +this.value, this.value + 'K white'); });
+        $('sbright').addEventListener('change', function () { L.brightness = +this.value; control(L, 'brightness', L.brightness); });
+        $('ssw').addEventListener('click', function (e) { var s = e.target.getAttribute('data-s'); if (s !== null) control(L, SWATCHES[+s][0], SWATCHES[+s][1]); });
+        return;
+      }
+      $('tools').innerHTML = '<input type="search" id="filter" placeholder="Filter scenes…">';
+      function show() {
+        var q = $('filter').value.toLowerCase(), out = [];
+        for (var i = 0; i < scenes.length; i++) if (scenes[i].kind === tab && scenes[i].name.toLowerCase().indexOf(q) >= 0) out.push(scenes[i]);
+        // A plain grid of names fits far more scenes on screen than a list.
+        var h = '';
+        for (var k = 0; k < out.length; k++) h += '<span class="pill" data-k="' + k + '">' + esc(out[k].name) + '</span>';
+        $('sheetbody').innerHTML = out.length ? '<div class="grid2">' + h + '</div>' : '<div class="dim" style="padding:12px 4px">' +
+          (tab === 'diyScene' ? 'No DIY scenes. Make some in the Govee app and they appear here.' : 'No scenes found') + '</div>';
+        $('sheetbody').onclick = function (e) { var k = e.target.getAttribute('data-k'); if (k !== null) control(L, out[+k].kind, out[+k].value, out[+k].name); };
+      }
+      $('filter').addEventListener('input', show);
+      if (scenes) return show();
+      loading();
+      api('GET', '/api/govee?scenes=1&sku=' + encodeURIComponent(L.sku) + '&device=' + encodeURIComponent(L.device), null, function (err, d) {
+        if (err) return sheetError(err);
+        scenes = d; if (sheet.tab === tab) show();
+      });
+    });
+  }
   loadLights(); setInterval(loadLights, 60000);
 
   // ---------- Spotify ----------
-  var song = null, songAt = 0;
+  var song = null, songAt = 0, volDragging = false;
   var PLAY = 'M8 5v14l11-7z', PAUSE = 'M6 5h4v14H6zM14 5h4v14h-4z';
   function mmss(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + pad(s % 60); }
   function drawProgress() {
@@ -341,10 +567,14 @@ var CITY = 'Varna';
   function renderSong() {
     var on = song && song.active;
     $('title').textContent = on ? song.title : 'Nothing playing';
-    $('artist').textContent = on ? song.artist : '';
+    $('artist').textContent = on ? song.artist : 'Tap Browse to pick something';
+    $('device').textContent = on && song.device ? 'On ' + song.device : '';
     $('art').style.backgroundImage = on && song.art ? 'url(' + song.art + ')' : 'none';
     $('ppicon').setAttribute('d', on && song.playing ? PAUSE : PLAY);
     $('pp').setAttribute('data-a', on && song.playing ? 'pause' : 'play');
+    $('shuffle').className = 'btn sm' + (on && song.shuffle ? ' on' : '');
+    if (!volDragging && on && song.volume != null) $('volume').value = song.volume;
+    $('volume').parentNode.style.visibility = on && song.volume != null ? '' : 'hidden';
     if (!on) { $('bar').style.width = '0'; $('pos').textContent = $('dur').textContent = '0:00'; }
     drawProgress();
   }
@@ -356,15 +586,59 @@ var CITY = 'Varna';
       song = d; songAt = Date.now(); renderSong();
     });
   }
-  var controls = document.querySelectorAll('.btn');
+  function spotify(body, done) {
+    api('POST', '/api/spotify', body, function (err) {
+      if (err) toast(err);
+      setTimeout(loadSong, 700);
+      if (done) done(err);
+    });
+  }
+  var controls = document.querySelectorAll('.btn[data-a]');
   for (var b = 0; b < controls.length; b++) controls[b].addEventListener('click', function () {
     var a = this.getAttribute('data-a');
     if (song && song.active && (a === 'play' || a === 'pause')) { song.progress += song.playing ? Date.now() - songAt : 0; songAt = Date.now(); song.playing = a === 'play'; renderSong(); }
-    api('POST', '/api/spotify', { action: a }, function (err) {
-      $('merr').textContent = err || '';
-      setTimeout(loadSong, 600);
-    });
+    spotify({ action: a });
   });
+  $('shuffle').addEventListener('click', function () {
+    if (!song || !song.active) return;
+    song.shuffle = !song.shuffle; renderSong(); spotify({ action: 'shuffle', value: song.shuffle });
+  });
+  $('volume').addEventListener('touchstart', function () { volDragging = true; });
+  $('volume').addEventListener('mousedown', function () { volDragging = true; });
+  $('volume').addEventListener('change', function () { volDragging = false; if (song) song.volume = +this.value; spotify({ action: 'volume', value: +this.value }); });
+
+  function play(it) {
+    spotify({ action: 'playUri', uri: it.uri }, function (err) { if (!err) { toast('Playing ' + it.name); closeSheet(); } });
+  }
+  function openMusicSheet(first) {
+    var tabs = [{ id: 'playlists', label: 'Playlists' }, { id: 'search', label: 'Search' }, { id: 'devices', label: 'Devices' }];
+    if (first === 'devices') tabs.unshift(tabs.pop());
+    openSheet('Spotify', tabs, function (tab) {
+      if (tab === 'search') {
+        $('tools').innerHTML = '<form id="sform"><input type="search" id="q" placeholder="Songs, artists, albums, playlists" autocomplete="off"></form>';
+        $('sheetbody').innerHTML = '<div class="dim" style="padding:12px 4px">Type and press Search on the keyboard</div>';
+        $('sform').addEventListener('submit', function (e) {
+          e.preventDefault(); $('q').blur(); loading();
+          api('GET', '/api/spotify?view=search&q=' + encodeURIComponent($('q').value), null, function (err, d) {
+            if (err) return sheetError(err);
+            listItems(d, play, 'No results');
+          });
+        });
+        return;
+      }
+      loading();
+      api('GET', '/api/spotify?view=' + tab, null, function (err, d) {
+        if (sheet.tab !== tab) return;
+        if (err) return sheetError(err);
+        if (tab === 'playlists') return listItems(d, play, 'No playlists');
+        listItems(d, function (dev) {
+          spotify({ action: 'device', id: dev.id }, function (e2) { if (!e2) { toast('Playing on ' + dev.name); closeSheet(); } });
+        }, 'No devices found. Open Spotify on your phone, PC or speaker first.');
+      });
+    });
+  }
+  $('browse').addEventListener('click', function () { openMusicSheet(); });
+  $('devbtn').addEventListener('click', function () { openMusicSheet('devices'); });
   loadSong(); setInterval(loadSong, 5000); setInterval(drawProgress, 1000);
 
   // ---------- Sites ----------

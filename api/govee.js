@@ -17,6 +17,11 @@ async function govee(path, body) {
 }
 
 export function capability(action, value) {
+  if (action === 'scene') {
+    return value && Number.isFinite(value.id) && Number.isFinite(value.paramId)
+      ? { type: 'devices.capabilities.dynamic_scene', instance: 'lightScene', value: { id: value.id, paramId: value.paramId } } : null;
+  }
+  if (action === 'diyScene') return Number.isFinite(value) ? { type: 'devices.capabilities.dynamic_scene', instance: 'diyScene', value } : null;
   const v = Number(value);
   if (!Number.isFinite(v)) return null;
   switch (action) {
@@ -33,10 +38,34 @@ const stateOf = (caps, instance) => {
   return c && c.state ? c.state.value : undefined;
 };
 
+const options = (res) => [].concat(...((res.payload && res.payload.capabilities) || []).map((c) => (c.parameters && c.parameters.options) || []));
+const sceneCache = {};
+
+// Built-in scenes + the user's DIY scenes for one light. Cached an hour: they rarely change and count against the daily limit.
+async function scenes(sku, device) {
+  const key = sku + device, hit = sceneCache[key];
+  if (hit && Date.now() - hit.at < 36e5) return hit.list;
+  const payload = { sku, device };
+  const [built, diy] = await Promise.all([
+    govee('/device/scenes', { requestId: crypto.randomUUID(), payload }).catch(() => ({})),
+    govee('/device/diy-scenes', { requestId: crypto.randomUUID(), payload }).catch(() => ({})),
+  ]);
+  const list = options(built).map((o) => ({ name: o.name, kind: 'scene', value: o.value }))
+    .concat(options(diy).map((o) => ({ name: o.name, kind: 'diyScene', value: o.value })));
+  sceneCache[key] = { at: Date.now(), list };
+  return list;
+}
+
 export async function GET(request) {
   const no = denied(request); if (no) return no;
   if (!process.env.GOVEE_API_KEY) return fail('GOVEE_API_KEY is not set', 503);
+  const q = new URL(request.url).searchParams;
   try {
+    if (q.has('scenes')) {
+      const sku = q.get('sku') || '', device = q.get('device') || '';
+      if (!/^[\w-]{2,20}$/.test(sku) || !/^[\w:]{2,40}$/.test(device)) return fail('Bad request', 400);
+      return Response.json(await scenes(sku, device));
+    }
     // The device list rarely changes and counts against Govee's daily limit, so keep it for 10 min.
     if (!devices || Date.now() - devicesAt > 6e5) {
       devices = ((await govee('/user/devices')).data || []).filter((d) => d.type === 'devices.types.light');
