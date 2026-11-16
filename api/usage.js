@@ -42,7 +42,7 @@ export async function GET(request) {
 export async function POST(request) {
   const no = denied(request); if (no) return no;
   const b = await request.json().catch(() => ({}));
-  if (!['song', 'focus'].includes(b.kind) || typeof b.name !== 'string' || !b.name || b.name.length > 120) return fail('Bad request', 400);
+  if (!['song', 'focus', 'scene'].includes(b.kind) || typeof b.name !== 'string' || !b.name || b.name.length > 120) return fail('Bad request', 400);
   // Two screens showing the dashboard both report the same song; the 10-minute key keeps one.
   await log(b.kind, b.name, b.kind === 'song' ? 'song:' + b.name + ':' + Math.floor(Date.now() / 6e5) : null);
   return Response.json({ ok: true });

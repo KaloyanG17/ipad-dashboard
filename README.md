@@ -25,6 +25,7 @@ It runs on sample data: every button works, and nothing touches real devices.
 - **Spotify:** now playing with album art and live progress, play/pause/skip, volume, shuffle, your playlists and Liked Songs, search, and moving playback between devices (phone, PC, Echo…).
 - **Weather:** current conditions plus a 5-day forecast from Open-Meteo, with no API key.
 - **Uptime:** a live up/down status and response time for any list of websites.
+- **Moods:** thirteen one-tap colourways (Sunset, Ocean, Cyberpunk, Candle…) that deal their colours out across all the lights and set the brightness to match.
 - **Lights follow the music:** one tap and the lights take the dominant colour of the current album art, worked out on a canvas in the page.
 - **Focus timer:** a 25/5 Pomodoro timer that turns the lights red while you focus and green on the break, then puts them back the way they were.
 - **Phone status:** an iOS Shortcut reports the phone's battery level and when you arrive home or leave.

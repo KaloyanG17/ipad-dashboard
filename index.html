@@ -93,7 +93,7 @@
   .compact .track { margin-top: 6px; }
 
   /* sites */
-  .site { margin: 4px 18px 4px 0; font-size: 14px; white-space: nowrap; }
+  .site { display: inline-block; margin: 4px 18px 4px 0; font-size: 14px; white-space: nowrap; }
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #7ee2a8; margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 8px rgba(126,226,168,.7); }
   .dot.down { background: #ff7a7a; box-shadow: 0 0 8px rgba(255,122,122,.8); }
 
@@ -107,6 +107,14 @@
   .flat { margin-bottom: 0; }
   #card-focus.focus { border-color: rgba(255, 90, 70, .7); }
   #card-focus.break { border-color: rgba(126, 226, 168, .7); }
+
+  /* moods */
+  #moods, #sites { overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+  #moods::-webkit-scrollbar, #sites::-webkit-scrollbar { display: none; }
+  .mood { display: inline-block; padding: 10px 16px; border-radius: 14px; margin-right: 8px; font-size: 14px; color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,.75); border: 1px solid rgba(255,255,255,.28); }
+  .mood:active { opacity: .6; }
+  .mood.on { box-shadow: 0 0 0 2px #f4efe6; }
 
   /* stats */
   .fill { height: 100%; background: #f2b04a; border-radius: 3px; }
@@ -215,9 +223,14 @@
     <span class="pill flat" id="freset" style="margin-right:0">Reset</span>
   </div>
 
-  <div class="card glass row" id="card-sites" style="-webkit-flex-wrap:wrap;flex-wrap:wrap">
+  <div class="card glass row" id="card-moods" style="padding-right:88px">
+    <div class="label" style="margin-right:14px">Moods</div>
+    <div id="moods" class="grow"></div>
+  </div>
+
+  <div class="card glass row" id="card-sites">
     <div class="label" style="margin-right:18px">Sites</div>
-    <div id="sites" class="row grow" style="-webkit-flex-wrap:wrap;flex-wrap:wrap"><span class="dim">Loading…</span></div>
+    <div id="sites" class="grow"><span class="dim">Loading…</span></div>
   </div>
 </div>
 
@@ -400,8 +413,8 @@ var CITY = 'Varna';
   var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { drawBg(); markCompact(); }, 300); });
 
   // ---------- Layout: card order, width (of 12 columns), height (rows) and visibility, saved on this device ----------
-  var NAMES = { clock: 'Clock', weather: 'Weather', phone: 'Phone', lights: 'Lights', music: 'Spotify', focus: 'Focus', sites: 'Sites' };
-  var DEFAULT = [{ id: 'clock', w: 4, h: 2 }, { id: 'weather', w: 5, h: 2 }, { id: 'phone', w: 3, h: 2 }, { id: 'lights', w: 7, h: 4 }, { id: 'music', w: 5, h: 5 }, { id: 'focus', w: 7, h: 1 }, { id: 'sites', w: 12, h: 1 }];
+  var NAMES = { clock: 'Clock', weather: 'Weather', phone: 'Phone', lights: 'Lights', music: 'Spotify', focus: 'Focus', moods: 'Moods', sites: 'Sites' };
+  var DEFAULT = [{ id: 'clock', w: 4, h: 2 }, { id: 'weather', w: 5, h: 2 }, { id: 'phone', w: 3, h: 2 }, { id: 'lights', w: 7, h: 4 }, { id: 'music', w: 5, h: 4 }, { id: 'focus', w: 7, h: 1 }, { id: 'sites', w: 5, h: 1 }, { id: 'moods', w: 12, h: 1 }];
   var layout;
   try { layout = JSON.parse(localStorage.getItem('layout')); } catch (e) {}
   if (!layout || layout.length !== DEFAULT.length) layout = JSON.parse(JSON.stringify(DEFAULT));
@@ -606,14 +619,14 @@ var CITY = 'Varna';
       lights = d; renderLights();
     });
   }
-  function control(L, action, value, label) {
+  function control(L, action, value, label, quiet) {
     hold[L.device] = Date.now() + 10000;
     if (action !== 'power' && action !== 'brightness') L.scene = label || '';
     if (action !== 'power' && !L.on) L.on = true;
     renderLights();
     api('POST', '/api/govee', { sku: L.sku, device: L.device, action: action, value: value, label: label }, function (err) {
       if (err) { hold[L.device] = 0; toast(err); loadLights(); }
-      else if (label) toast(L.name + ': ' + label);
+      else if (label && !quiet) toast(L.name + ': ' + label);
     });
   }
   function lightOf(el) { var row = closest(el, 'light', box); return row ? lights[+row.getAttribute('data-i')] : null; }
@@ -820,6 +833,55 @@ var CITY = 'Varna';
     });
   }
   loadPhone(); setInterval(loadPhone, 60000);
+
+  // ---------- Moods: one-tap colourways across all the lights ----------
+  // Each mood lists colours that are dealt out across the lights in turn. 'K…' entries are white temperatures.
+  var MOODS = [
+    { name: 'Sunset', c: [0xff5e1a, 0xff2d75], b: 80 },
+    { name: 'Ocean', c: [0x0a84ff, 0x00d2c8], b: 70 },
+    { name: 'Forest', c: [0x1fbf4a, 0xa4e600], b: 70 },
+    { name: 'Cyberpunk', c: [0xff00c8, 0x00e5ff], b: 100 },
+    { name: 'Aurora', c: [0x00ff9d, 0x8a2be2], b: 70 },
+    { name: 'Lava', c: [0xff1a00, 0xff8c00], b: 90 },
+    { name: 'Rose', c: [0xff5c8a, 0xffb3a0], b: 60 },
+    { name: 'Ice', c: [0x9fe8ff, 0x3a6bff], b: 80 },
+    { name: 'Gaming', c: [0x7a00ff, 0xff0033], b: 100 },
+    { name: 'Movie', c: [0x1a2bff, 0x5a00c8], b: 20 },
+    { name: 'Candle', c: ['K2200'], b: 35 },
+    { name: 'Reading', c: ['K4000'], b: 100 },
+    { name: 'Daylight', c: ['K6500'], b: 100 }
+  ];
+  var KCSS = { K2200: '#ff9a3c', K4000: '#ffe2bd', K6500: '#dfe9ff' }, lastMood = '';
+  function moodCss(v) { return typeof v === 'string' ? KCSS[v] : '#' + ('00000' + v.toString(16)).slice(-6); }
+  function renderMoods() {
+    var h = '';
+    for (var i = 0; i < MOODS.length; i++) {
+      var c = MOODS[i].c, a = moodCss(c[0]), b = moodCss(c[c.length - 1]);
+      h += '<span class="mood' + (MOODS[i].name === lastMood ? ' on' : '') + '" data-m="' + i + '" style="background:linear-gradient(135deg,' + a + ',' + b + ')">' + MOODS[i].name + '</span>';
+    }
+    $('moods').innerHTML = h;
+  }
+  function applyMood(m) {
+    var t = [], i;
+    for (i = 0; i < lights.length; i++) if (lights[i].online) t.push(lights[i]);
+    if (!t.length) return toast('No lights online');
+    for (i = 0; i < t.length; i++) {
+      var L = t[i], v = m.c[i % m.c.length];
+      if (!L.on) { L.on = true; control(L, 'power', 1); }
+      if (typeof v === 'string') control(L, 'colorTemp', +v.slice(1), m.name, true); else control(L, 'color', v, m.name, true);
+      L.brightness = m.b;
+      // a moment later, so Govee applies the colour first and the brightness second
+      (function (L) { setTimeout(function () { control(L, 'brightness', m.b); }, 500); })(L);
+    }
+    lastMood = m.name; renderMoods();
+    toast('Mood: ' + m.name);
+    api('POST', '/api/usage', { kind: 'scene', name: 'Mood: ' + m.name }, function () {});
+  }
+  $('moods').addEventListener('click', function (e) {
+    var i = e.target.getAttribute('data-m');
+    if (i !== null) applyMood(MOODS[+i]);
+  });
+  renderMoods();
 
   // ---------- Focus timer: lights go red while you focus, green on the break ----------
   var FOCUS_MIN = 25, BREAK_MIN = 5, F;
