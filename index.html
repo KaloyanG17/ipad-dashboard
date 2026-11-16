@@ -321,8 +321,8 @@ var CITY = 'Varna';
       '"/><stop offset="1" stop-color="' + b + '"/></linearGradient></defs><rect width="10" height="10" fill="url(#g)"/></svg>');
   }
   var D = {
-    lights: [{ sku: 'H6056', device: 'D1', name: 'Desk light bars', online: true, on: true, brightness: 80 },
-      { sku: 'H6046', device: 'D2', name: 'Bed bar', online: true, on: false, brightness: 40 }],
+    lights: [{ sku: 'H6056', device: 'D1', name: 'Desk light bars', online: true, on: true, brightness: 80, music: [{ name: 'Rhythm', value: 2 }, { name: 'Beat', value: 4 }] },
+      { sku: 'H6046', device: 'D2', name: 'Bed bar', online: true, on: false, brightness: 40, music: [{ name: 'Beat', value: 5 }] }],
     scenes: ['Sunrise', 'Sunset', 'Aurora', 'Forest', 'Ocean', 'Fire', 'Candlelight', 'Party', 'Romantic', 'Rainbow', 'Starry sky', 'Movie', 'Reading', 'Breathe', 'Lightning']
       .map(function (n, i) { return { name: n, kind: 'scene', value: { id: i, paramId: i } }; }).concat([{ name: 'My chill', kind: 'diyScene', value: 7 }]),
     tracks: [['Midnight Drive', 'Sample Artist', '#f2b04a', '#7a2d6b'], ['Neon Harbour', 'The Placeholders', '#0a84ff', '#34c759'], ['Paper Planes', 'Demo Kid', '#ff2d92', '#ff9500']],
@@ -753,7 +753,7 @@ var CITY = 'Varna';
   loadLights(); setInterval(loadLights, 60000);
 
   // ---------- Spotify ----------
-  var song = null, songAt = 0, volDragging = false, lastSong = '', syncOn = localStorage.getItem('sync') === '1';
+  var song = null, songAt = 0, volDragging = false, lastSong = '', syncMode = { '1': 'colour', colour: 'colour', beat: 'beat' }[localStorage.getItem('sync')] || 'off';
   var PLAY = 'M8 5v14l11-7z', PAUSE = 'M6 5h4v14H6zM14 5h4v14h-4z';
   function mmss(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + pad(s % 60); }
   function drawProgress() {
@@ -787,7 +787,7 @@ var CITY = 'Varna';
       if (d.active && d.playing && id !== lastSong) {
         lastSong = id;
         api('POST', '/api/usage', { kind: 'song', name: id }, function () {});
-        if (syncOn) syncLights();
+        if (syncMode !== 'off') syncLights();
       }
     });
   }
@@ -868,18 +868,36 @@ var CITY = 'Varna';
     img.onerror = function () { cb(null); };
     img.src = url;
   }
-  function syncLights() {
-    if (!song || !song.active || !song.art) return;
-    artColour(song.art, function (rgb) {
-      if (rgb === null) return;
-      for (var i = 0; i < lights.length; i++) if (lights[i].online && lights[i].on) control(lights[i], 'color', rgb, 'Music sync');
-    });
+  // Sync has three settings. Colour: the lights take the album art's colour on each new song.
+  // Beat: the same colour, but the light's own microphone makes it pulse with the bass and volume in the room.
+  // (Spotify gives new apps no loudness data, and Govee's cloud is too slow to send beats, so the light has to listen itself.)
+  var SYNC = ['off', 'colour', 'beat'], SYNC_LABEL = { off: 'Sync lights', colour: 'Sync: colour', beat: 'Sync: beat' };
+  function beatMode(L) { // the id of "Beat" differs between light models, so look it up by name
+    var m = L.music || [], want = ['Beat', 'Rhythm', 'Energic'];
+    for (var w = 0; w < want.length; w++) for (var i = 0; i < m.length; i++) if (m[i].name === want[w]) return m[i].value;
+    return m.length ? m[0].value : null;
   }
-  function renderSync() { $('sync').className = 'pill' + (syncOn ? ' on' : ''); }
+  function syncSend(rgb, forceStatic) {
+    for (var i = 0; i < lights.length; i++) {
+      var L = lights[i];
+      if (!L.online || !L.on) continue;
+      var mode = syncMode === 'beat' && !forceStatic ? beatMode(L) : null;
+      if (mode !== null) control(L, 'music', { mode: mode, sensitivity: 100, rgb: rgb }, 'Beat sync', true);
+      else if (rgb !== null) control(L, 'color', rgb, forceStatic ? '' : 'Music sync', true);
+    }
+  }
+  function syncLights(forceStatic) {
+    if (!song || !song.active) return;
+    if (!song.art) return syncSend(null, forceStatic);
+    artColour(song.art, function (rgb) { syncSend(rgb, forceStatic); });
+  }
+  function renderSync() { $('sync').className = 'pill' + (syncMode !== 'off' ? ' on' : ''); $('sync').textContent = SYNC_LABEL[syncMode]; }
   $('sync').addEventListener('click', function () {
-    syncOn = !syncOn; localStorage.setItem('sync', syncOn ? '1' : '0'); renderSync();
-    toast(syncOn ? 'Lights that are on will follow the album art' : 'Music sync off');
-    if (syncOn) syncLights();
+    var was = syncMode;
+    syncMode = SYNC[(SYNC.indexOf(syncMode) + 1) % SYNC.length]; localStorage.setItem('sync', syncMode); renderSync();
+    toast(syncMode === 'colour' ? 'Lights follow the album colour' : syncMode === 'beat' ? 'Lights pulse to the music in the album colour' : 'Music sync off');
+    if (syncMode !== 'off') syncLights();
+    else if (was === 'beat') syncLights(true); // leave the lights on a steady colour instead of still pulsing
   });
   renderSync();
 
