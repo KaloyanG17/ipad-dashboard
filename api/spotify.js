@@ -125,7 +125,7 @@ export function command(b) {
   }
   if (b.action === 'volume' && Number.isFinite(b.value)) return ['PUT', '/me/player/volume?volume_percent=' + Math.min(100, Math.max(0, Math.round(b.value)))];
   if (b.action === 'shuffle') return ['PUT', '/me/player/shuffle?state=' + (b.value ? 'true' : 'false')];
-  if (b.action === 'device' && /^[A-Za-z0-9]{10,60}$/.test(b.id || '')) return ['PUT', '/me/player', { device_ids: [b.id], play: true }];
+  if (b.action === 'device' && /^[w-]{10,80}$/.test(b.id || '')) return ['PUT', '/me/player', { device_ids: [b.id], play: true }];
   return null;
 }
 

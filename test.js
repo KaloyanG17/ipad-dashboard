@@ -34,3 +34,5 @@ assert.strictEqual(command({ action: 'shuffle', value: true })[1], '/me/player/s
 assert.strictEqual(command({ action: 'device', id: '../../x' }), null);
 assert.strictEqual(command({ action: 'nope' }), null);
 console.log('scenes + spotify self-check ok');
+assert.ok(command({ action: 'device', id: 'bf240235-73c9-48e1-b5f3-8c964a313834_amzn_1' }), 'Echo-style device ids are allowed');
+console.log('device id check ok');
