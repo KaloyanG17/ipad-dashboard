@@ -308,8 +308,10 @@ var CITY = 'Varna';
 
   function markCompact() {
     for (var i = 0; i < layout.length; i++) {
+      // Hide a card's extras only when its full content really doesn't fit.
       var el = $('card-' + layout[i].id);
-      el.classList.toggle('compact', el.offsetHeight < (layout[i].id === 'music' ? 300 : 160));
+      el.classList.remove('compact');
+      if (el.scrollHeight > el.clientHeight + 2) el.classList.add('compact');
     }
   }
   function applyLayout() {
@@ -329,6 +331,7 @@ var CITY = 'Varna';
     setTimeout(markCompact, 0);
   }
   applyLayout();
+  setInterval(markCompact, 4000); // cards fill in after their data loads
 
   $('gear').addEventListener('click', function () { document.body.classList.toggle('editing'); });
   grid.addEventListener('click', function (e) {
