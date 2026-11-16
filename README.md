@@ -2,6 +2,9 @@
 
 **Turning a 2013 iPad mini that Apple stopped updating years ago into a smart-home wall panel.**
 
+![The dashboard running on my iPad mini 2](docs/ipad-photo.jpg)
+<sub>Running on my iPad mini 2, with real lights, real Spotify playback on an Echo Dot, and live weather.</sub>
+
 The iPad mini 2 is stuck on iOS 12 and Safari 12. Most modern web apps, and the official apps for my lights and music, no longer run on it. So I built a dashboard that does: it controls my Govee lights, browses and plays Spotify, and shows the weather and whether my websites are up. It runs fullscreen from the iPad's Home Screen, and the backend runs serverless on Vercel.
 
 ### ▶ [Try the live demo](https://kaloyan-ipad.vercel.app/?demo)
