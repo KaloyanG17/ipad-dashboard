@@ -242,7 +242,11 @@ var CITY = 'Varna';
     if (method === 'GET') {
       if (q.indexOf('view=playlists') >= 0) return D.playlists;
       if (q.indexOf('view=devices') >= 0) return D.devices.map(function (d) { return { id: d.id, name: d.name, sub: d.sub + (d.name === D.device ? ' · playing here' : '') }; });
-      if (q.indexOf('view=search') >= 0) return D.tracks.map(function (t, i) { return { name: t[0], sub: 'Song · ' + t[1], img: art(t[2], t[3]), uri: 'spotify:track:' + i }; });
+      if (q.indexOf('view=search') >= 0) {
+        var term = decodeURIComponent((/q=([^&]*)/.exec(q) || ['', ''])[1]).toLowerCase();
+        return D.tracks.map(function (t, i) { return { name: t[0], sub: 'Song · ' + t[1], img: art(t[2], t[3]), uri: 'spotify:track:' + i }; })
+          .filter(function (r) { return (r.name + r.sub).toLowerCase().indexOf(term) >= 0; });
+      }
       var p = D.progress + (D.playing ? Date.now() - D.at : 0);
       if (p > 200000) { D.t = (D.t + 1) % D.tracks.length; D.progress = 0; D.at = Date.now(); p = 0; tr = D.tracks[D.t]; }
       return { active: true, playing: D.playing, title: tr[0], artist: tr[1], art: art(tr[2], tr[3]), progress: p, duration: 200000, shuffle: D.shuffle, device: D.device, volume: D.volume };
