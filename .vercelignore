@@ -1,0 +1,5 @@
+local-claude
+dev.js
+test.js
+.env*
+.claude

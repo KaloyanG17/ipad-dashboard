@@ -1,0 +1,9 @@
+{
+  "name": "ipad-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env.local dev.js",
+    "test": "node test.js"
+  }
+}

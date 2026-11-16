@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Home">
+<title>Home</title>
+<!-- Written for Safari 12 (iOS 12): plain ES5, no ?. / ??, no flex gap. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #061a2e; color: #f4efe6; overflow: hidden;
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  #bg { position: fixed; left: 0; top: 0; width: 100%; height: 100%; }
+  .wrap { position: relative; height: 100%; box-sizing: border-box; padding: 24px 28px;
+    display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
+  .row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+  .grow { -webkit-flex: 1; flex: 1; min-width: 0; }
+  .glass { background: rgba(6, 22, 40, 0.58); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; padding: 16px 20px; box-sizing: border-box; }
+  .mono { font-family: Menlo, Courier, monospace; }
+  .label { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(244, 239, 230, 0.62); }
+  .dim { color: rgba(244, 239, 230, 0.62); }
+  .err { font-size: 14px; color: #ffb3a7; margin-top: 10px; }
+  .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* header */
+  header { -webkit-align-items: flex-start; align-items: flex-start; }
+  #clock { font-size: 76px; font-weight: 200; line-height: 1; letter-spacing: -0.02em; text-shadow: 0 2px 18px rgba(0,0,0,.45); }
+  #date { margin-top: 8px; font-size: 18px; color: rgba(244,239,230,.85); text-shadow: 0 1px 8px rgba(0,0,0,.5); }
+  .weather { width: 470px; }
+  #wnow { -webkit-align-items: flex-end; align-items: flex-end; }
+  #wicon { font-size: 44px; line-height: 1; margin-right: 12px; }
+  #wtemp { font-size: 52px; font-weight: 200; line-height: 1; margin-right: 14px; }
+  #wdesc { font-size: 15px; line-height: 1.45; }
+  .days { margin-top: 12px; -webkit-justify-content: space-between; justify-content: space-between; }
+  .day { text-align: center; font-size: 13px; width: 20%; }
+  .day b { display: block; font-size: 22px; font-weight: normal; margin: 3px 0; }
+
+  /* main */
+  .main { margin-top: 16px; -webkit-flex: 1; flex: 1; min-height: 0; -webkit-align-items: stretch; align-items: stretch; }
+  .lights { margin-right: 16px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .light { padding: 12px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .light:first-of-type { border-top: 0; }
+  .lname { font-size: 18px; }
+  .lsub { font-size: 13px; margin-top: 2px; }
+  .switch { width: 58px; height: 34px; border-radius: 17px; background: rgba(255,255,255,.18); position: relative; -webkit-transition: background .2s; transition: background .2s; }
+  .switch i { position: absolute; left: 3px; top: 3px; width: 28px; height: 28px; border-radius: 50%; background: #fff; -webkit-transition: -webkit-transform .2s; transition: transform .2s; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+  .switch.on { background: #f2b04a; }
+  .switch.on i { -webkit-transform: translateX(24px); transform: translateX(24px); }
+  .off .lname, .off .sws, .off input { opacity: .45; }
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 30px; background: transparent; margin: 8px 0 4px; }
+  input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(255,255,255,.2); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: #fff; margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+  .sws { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+  .sw { width: 34px; height: 34px; border-radius: 50%; margin: 4px 10px 0 0; border: 2px solid rgba(255,255,255,.25); box-sizing: border-box; }
+
+  .music { width: 330px; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
+  #art { width: 112px; height: 112px; border-radius: 14px; background: rgba(255,255,255,.08) center / cover no-repeat; -webkit-flex: none; flex: none; margin-right: 14px; }
+  #title { font-size: 19px; margin-bottom: 4px; }
+  #artist { font-size: 14px; }
+  .track { height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); margin-top: 16px; overflow: hidden; }
+  #bar { height: 100%; width: 0; background: #f3a9bd; border-radius: 3px; }
+  .times { -webkit-justify-content: space-between; justify-content: space-between; font-size: 11px; margin-top: 6px; }
+  .controls { margin-top: auto; padding-top: 10px; -webkit-justify-content: space-around; justify-content: space-around; }
+  .btn { width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.1); display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
+  .btn.big { width: 78px; height: 78px; background: #f4efe6; }
+  .btn svg { width: 26px; height: 26px; fill: #f4efe6; }
+  .btn.big svg { width: 32px; height: 32px; fill: #0b2440; }
+  .btn:active { opacity: .6; }
+
+  /* footer */
+  .sites { margin-top: 16px; padding: 12px 16px; }
+  #sites { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+  .site { margin: 4px 18px 4px 0; font-size: 14px; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #7ee2a8; margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 8px rgba(126,226,168,.7); }
+  .dot.down { background: #ff7a7a; box-shadow: 0 0 8px rgba(255,122,122,.8); }
+  #keymsg { display: none; position: absolute; left: 50%; top: 50%; -webkit-transform: translate(-50%,-50%); transform: translate(-50%,-50%); width: 420px; text-align: center; }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="wrap">
+  <header class="row">
+    <div class="grow">
+      <div id="clock">--:--</div>
+      <div id="date"></div>
+    </div>
+    <div class="glass weather">
+      <div class="row" id="wnow">
+        <div id="wicon">·</div><div id="wtemp">--°</div>
+        <div id="wdesc" class="grow"><span id="wtext">Loading weather…</span><br><span class="dim" id="wmore"></span></div>
+      </div>
+      <div class="row days" id="days"></div>
+    </div>
+  </header>
+
+  <div class="row main">
+    <div class="glass grow lights">
+      <div class="label">Lights</div>
+      <div id="lights"><div class="dim" style="margin-top:12px">Loading…</div></div>
+    </div>
+    <div class="glass music">
+      <div class="label" style="margin-bottom:12px">Now playing</div>
+      <div class="row" style="-webkit-align-items:flex-start;align-items:flex-start">
+        <div id="art"></div>
+        <div class="grow"><div id="title" class="ellipsis">–</div><div id="artist" class="dim ellipsis"></div><div id="merr" class="err"></div></div>
+      </div>
+      <div class="track"><div id="bar"></div></div>
+      <div class="row times mono dim"><span id="pos">0:00</span><span id="dur">0:00</span></div>
+      <div class="row controls">
+        <div class="btn" data-a="previous"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></div>
+        <div class="btn big" id="pp" data-a="play"><svg viewBox="0 0 24 24"><path id="ppicon" d="M8 5v14l11-7z"/></svg></div>
+        <div class="btn" data-a="next"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass sites row">
+    <div class="label" style="margin-right:18px">Sites</div>
+    <div id="sites" class="row grow"><span class="dim">Loading…</span></div>
+  </div>
+
+  <div class="glass" id="keymsg">Add your dashboard key to the address:<br><span class="mono">…vercel.app/?key=YOUR_DASH_KEY</span></div>
+</div>
+
+<script>
+// ===== Settings: change the city to yours =====
+var CITY = 'Varna';
+
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  // Key comes from ?key=… once, then is remembered. The URL keeps it too, so "Add to Home Screen" works.
+  var m = /[?&]key=([^&]+)/.exec(location.search);
+  var KEY = m ? decodeURIComponent(m[1]) : (localStorage.getItem('dashKey') || '');
+  if (m) localStorage.setItem('dashKey', KEY);
+  if (!KEY) $('keymsg').style.display = 'block';
+
+  function api(method, path, body, cb) {
+    var x = new XMLHttpRequest();
+    x.open(method, path, true);
+    x.timeout = 15000;
+    x.setRequestHeader('x-dash-key', KEY);
+    if (body) x.setRequestHeader('Content-Type', 'application/json');
+    x.onload = function () {
+      var d = null; try { d = JSON.parse(x.responseText); } catch (e) {}
+      if (x.status >= 200 && x.status < 300) cb(null, d);
+      else cb((d && d.error) || ('Error ' + x.status), d);
+    };
+    x.onerror = function () { cb('No connection'); };
+    x.ontimeout = function () { cb('Timed out'); };
+    x.send(body ? JSON.stringify(body) : null);
+  }
+  function getJSON(url, cb) {
+    var x = new XMLHttpRequest();
+    x.open('GET', url, true);
+    x.onload = function () { try { cb(null, JSON.parse(x.responseText)); } catch (e) { cb('Bad response'); } };
+    x.onerror = function () { cb('No connection'); };
+    x.send();
+  }
+
+  // ---------- Text-character landscape background ----------
+  function hash(x, y) { var n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n); }
+  function noise(x, y) {
+    var ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    var a = hash(ix, iy), b = hash(ix + 1, iy), c = hash(ix, iy + 1), d = hash(ix + 1, iy + 1);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  }
+  function fbm(x, y) { var v = 0, amp = 0.5; for (var i = 0; i < 4; i++) { v += amp * noise(x, y); x *= 2; y *= 2; amp *= 0.5; } return v; }
+  function mix(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+  function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+  var SKY_TOP = [10, 38, 70], SKY_LOW = [38, 108, 150], CLOUD = [244, 240, 232], CLOUD_SH = [150, 170, 190];
+  var AMBER = [242, 176, 74], PINK = [243, 169, 189], ROCK = [70, 78, 92], GROUND = [40, 34, 38];
+  function scene(x, y) {
+    var ridge = 0.72 + 0.07 * fbm(x * 3 + 7, 1.3) - 0.05 * Math.sin(x * 3.1);
+    if (y > ridge) {
+      var n = fbm(x * 9, y * 9);
+      if (n > 0.62) return mix(PINK, [255, 220, 230], (n - 0.62) * 2);
+      if (n > 0.52) return mix(AMBER, [120, 70, 30], 1 - (n - 0.52) * 10);
+      return mix(GROUND, ROCK, n * 1.4);
+    }
+    var col = mix(SKY_TOP, SKY_LOW, clamp(y / 0.75));
+    var sx = x - 0.8, sy = (y - 0.22) * 1.3;
+    col = mix(col, AMBER, clamp(Math.exp(-(sx * sx + sy * sy) * 30) * 0.9));
+    var centre = 0.4 + 0.15 * (noise(x * 2.5, 9) - 0.5) * 2;
+    var cl = (fbm(x * 3.2, y * 5 + 3) + 0.25) * Math.exp(-Math.pow((y - centre) / 0.22, 2));
+    if (cl > 0.5) {
+      var lit = clamp((cl - 0.5) * 3 + fbm(x * 14, y * 14) * 0.5 - 0.25 + (centre - y) * 1.5);
+      col = mix(mix(col, CLOUD_SH, clamp((cl - 0.5) * 8)), CLOUD, lit);
+    }
+    return col;
+  }
+  var RAMP = ' .,:;-=+*x%#@';
+  function drawBg() {
+    var cv = $('bg'), dpr = window.devicePixelRatio || 1, w = window.innerWidth, h = window.innerHeight;
+    cv.width = w * dpr; cv.height = h * dpr;
+    var ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.font = '8px Menlo, monospace';
+    ctx.textBaseline = 'top';
+    for (var gy = 0; gy < h; gy += 9) {
+      for (var gx = 0; gx < w; gx += 6) {
+        var c = scene(gx / w, gy / h), j = 0.85 + hash(gx, gy) * 0.3;
+        var lum = (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255;
+        ctx.fillStyle = 'rgb(' + (c[0] * 0.35 | 0) + ',' + (c[1] * 0.35 | 0) + ',' + (c[2] * 0.35 | 0) + ')';
+        ctx.fillRect(gx, gy, 6, 9);
+        ctx.fillStyle = 'rgb(' + Math.min(255, c[0] * j | 0) + ',' + Math.min(255, c[1] * j | 0) + ',' + Math.min(255, c[2] * j | 0) + ')';
+        ctx.fillText(RAMP.charAt(Math.min(RAMP.length - 1, (lum * j * RAMP.length) | 0)), gx, gy);
+      }
+    }
+  }
+  drawBg();
+  var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(drawBg, 300); });
+
+  // ---------- Clock ----------
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function tick() {
+    var d = new Date();
+    $('clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    $('date').textContent = DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+  }
+  tick(); setInterval(tick, 1000);
+
+  // ---------- Weather (Open-Meteo, free, no key, called straight from the iPad) ----------
+  function wx(code) {
+    if (code === 0) return ['☀️', 'Clear'];
+    if (code <= 2) return ['⛅', 'Partly cloudy'];
+    if (code === 3) return ['☁️', 'Overcast'];
+    if (code <= 48) return ['🌫', 'Fog'];
+    if (code <= 57) return ['🌦', 'Drizzle'];
+    if (code <= 67 || (code >= 80 && code <= 82)) return ['🌧', 'Rain'];
+    if (code <= 77 || code === 85 || code === 86) return ['❄️', 'Snow'];
+    return ['⛈', 'Thunderstorm'];
+  }
+  var place = null;
+  function weather() {
+    if (!place) {
+      return getJSON('https://geocoding-api.open-meteo.com/v1/search?count=1&name=' + encodeURIComponent(CITY), function (err, g) {
+        if (err || !g.results || !g.results.length) { $('wtext').textContent = 'City "' + CITY + '" not found'; return; }
+        place = g.results[0]; weather();
+      });
+    }
+    getJSON('https://api.open-meteo.com/v1/forecast?latitude=' + place.latitude + '&longitude=' + place.longitude +
+      '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=5', function (err, w) {
+      if (err || !w.current) { $('wtext').textContent = 'Weather unavailable'; return; }
+      var c = w.current, n = wx(c.weather_code), dl = w.daily;
+      $('wicon').textContent = n[0];
+      $('wtemp').textContent = Math.round(c.temperature_2m) + '°';
+      $('wtext').textContent = n[1] + ' · ' + place.name;
+      $('wmore').textContent = 'Feels ' + Math.round(c.apparent_temperature) + '° · wind ' + Math.round(c.wind_speed_10m) + ' km/h · ☀ ' +
+        dl.sunrise[0].slice(11) + '–' + dl.sunset[0].slice(11);
+      var html = '';
+      for (var i = 0; i < dl.time.length; i++) {
+        var p = dl.time[i].split('-'), day = i === 0 ? 'Today' : DAYS[new Date(+p[0], p[1] - 1, +p[2]).getDay()].slice(0, 3);
+        html += '<div class="day"><span class="dim">' + day + '</span><b>' + wx(dl.weather_code[i])[0] + '</b>' +
+          Math.round(dl.temperature_2m_max[i]) + '° <span class="dim">' + Math.round(dl.temperature_2m_min[i]) + '°</span></div>';
+      }
+      $('days').innerHTML = html;
+    });
+  }
+  weather(); setInterval(weather, 15 * 60000);
+
+  // ---------- Govee lights ----------
+  var SWATCHES = [['colorTemp', 2700, '#ffc27a'], ['colorTemp', 6500, '#eef3ff'], ['color', 0xff3b30, '#ff3b30'], ['color', 0xff9500, '#ff9500'],
+    ['color', 0xffd60a, '#ffd60a'], ['color', 0x34c759, '#34c759'], ['color', 0x0a84ff, '#0a84ff'], ['color', 0xbf5af2, '#bf5af2'], ['color', 0xff2d92, '#ff2d92']];
+  var lights = [], hold = {}, dragging = false, box = $('lights');
+
+  function renderLights() {
+    if (box.children.length !== lights.length || !box.querySelector('.light')) {
+      var sw = '';
+      for (var s = 0; s < SWATCHES.length; s++) sw += '<span class="sw" data-s="' + s + '" style="background:' + SWATCHES[s][2] + '"></span>';
+      var html = '';
+      for (var i = 0; i < lights.length; i++) {
+        html += '<div class="light" data-i="' + i + '"><div class="row"><div class="grow"><div class="lname ellipsis">' + esc(lights[i].name) +
+          '</div><div class="lsub dim"></div></div><div class="switch"><i></i></div></div>' +
+          '<input type="range" min="1" max="100"><div class="row sws">' + sw + '</div></div>';
+      }
+      box.innerHTML = html || '<div class="dim" style="margin-top:12px">No Govee lights found on this account</div>';
+    }
+    for (var k = 0; k < lights.length; k++) {
+      var L = lights[k], el = box.children[k];
+      el.className = 'light' + (L.on ? '' : ' off');
+      el.querySelector('.switch').className = 'switch' + (L.on ? ' on' : '');
+      el.querySelector('.lsub').textContent = !L.online ? 'Offline' : L.on ? 'On' + (L.brightness ? ' · ' + L.brightness + '%' : '') : 'Off';
+      if (!dragging && L.brightness) el.querySelector('input').value = L.brightness;
+    }
+  }
+  function loadLights() {
+    if (!KEY) return;
+    api('GET', '/api/govee', null, function (err, d) {
+      if (err) { box.innerHTML = '<div class="err">' + esc(err) + '</div>'; lights = []; return; }
+      var now = Date.now();
+      // Govee reports the old state for a few seconds after a change; keep our optimistic value meanwhile.
+      for (var i = 0; i < d.length; i++) {
+        var old = hold[d[i].device] && hold[d[i].device] > now && lights[i];
+        if (old && old.device === d[i].device) d[i] = old;
+      }
+      lights = d; renderLights();
+    });
+  }
+  function control(L, action, value) {
+    hold[L.device] = Date.now() + 10000;
+    api('POST', '/api/govee', { sku: L.sku, device: L.device, action: action, value: value }, function (err) {
+      if (err) { hold[L.device] = 0; alert(err); loadLights(); }
+    });
+  }
+  function lightOf(el) { while (el && el !== box) { if (el.getAttribute('data-i')) return lights[+el.getAttribute('data-i')]; el = el.parentNode; } }
+  box.addEventListener('click', function (e) {
+    var L = lightOf(e.target); if (!L) return;
+    if (e.target.closest('.switch')) { L.on = !L.on; control(L, 'power', L.on ? 1 : 0); renderLights(); }
+    var s = e.target.getAttribute('data-s');
+    if (s !== null) { var sw = SWATCHES[+s]; if (!L.on) { L.on = true; renderLights(); } control(L, sw[0], sw[1]); }
+  });
+  box.addEventListener('touchstart', function (e) { if (e.target.type === 'range') dragging = true; });
+  box.addEventListener('mousedown', function (e) { if (e.target.type === 'range') dragging = true; });
+  box.addEventListener('change', function (e) {
+    if (e.target.type !== 'range') return;
+    dragging = false;
+    var L = lightOf(e.target); L.brightness = +e.target.value; control(L, 'brightness', L.brightness); renderLights();
+  });
+  loadLights(); setInterval(loadLights, 60000);
+
+  // ---------- Spotify ----------
+  var song = null, songAt = 0;
+  var PLAY = 'M8 5v14l11-7z', PAUSE = 'M6 5h4v14H6zM14 5h4v14h-4z';
+  function mmss(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + pad(s % 60); }
+  function drawProgress() {
+    if (!song || !song.active) return;
+    var p = Math.min(song.duration, song.progress + (song.playing ? Date.now() - songAt : 0));
+    $('bar').style.width = (song.duration ? p / song.duration * 100 : 0) + '%';
+    $('pos').textContent = mmss(p); $('dur').textContent = mmss(song.duration);
+  }
+  function renderSong() {
+    var on = song && song.active;
+    $('title').textContent = on ? song.title : 'Nothing playing';
+    $('artist').textContent = on ? song.artist : '';
+    $('art').style.backgroundImage = on && song.art ? 'url(' + song.art + ')' : 'none';
+    $('ppicon').setAttribute('d', on && song.playing ? PAUSE : PLAY);
+    $('pp').setAttribute('data-a', on && song.playing ? 'pause' : 'play');
+    if (!on) { $('bar').style.width = '0'; $('pos').textContent = $('dur').textContent = '0:00'; }
+    drawProgress();
+  }
+  function loadSong() {
+    if (!KEY) return;
+    api('GET', '/api/spotify', null, function (err, d) {
+      $('merr').textContent = err || '';
+      if (err) return;
+      song = d; songAt = Date.now(); renderSong();
+    });
+  }
+  var controls = document.querySelectorAll('.btn');
+  for (var b = 0; b < controls.length; b++) controls[b].addEventListener('click', function () {
+    var a = this.getAttribute('data-a');
+    if (song && song.active && (a === 'play' || a === 'pause')) { song.progress += song.playing ? Date.now() - songAt : 0; songAt = Date.now(); song.playing = a === 'play'; renderSong(); }
+    api('POST', '/api/spotify', { action: a }, function (err) {
+      $('merr').textContent = err || '';
+      setTimeout(loadSong, 600);
+    });
+  });
+  loadSong(); setInterval(loadSong, 5000); setInterval(drawProgress, 1000);
+
+  // ---------- Sites ----------
+  function loadSites() {
+    if (!KEY) return;
+    api('GET', '/api/sites', null, function (err, d) {
+      if (err) { $('sites').innerHTML = '<span class="err" style="margin:0">' + esc(err) + '</span>'; return; }
+      var html = '';
+      for (var i = 0; i < d.length; i++) {
+        var name = d[i].url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        html += '<span class="site"><span class="dot' + (d[i].up ? '' : ' down') + '"></span>' + esc(name) +
+          ' <span class="dim mono">' + (d[i].up ? d[i].ms + 'ms' : (d[i].status || 'down')) + '</span></span>';
+      }
+      $('sites').innerHTML = html || '<span class="dim">No sites set (SITES env var)</span>';
+    });
+  }
+  loadSites(); setInterval(loadSites, 60000);
+})();
+</script>
+</body>
+</html>
