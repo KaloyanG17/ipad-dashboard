@@ -3,10 +3,11 @@
   "description": "A smart-home wall dashboard for an old iPad (iOS 12 / Safari 12): Govee lights, Spotify, weather and uptime, served from Vercel.",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node --env-file-if-exists=.env.local dev.js",
-    "mock": "node dev.js --mock",
     "test": "node test.js"
   }
 }

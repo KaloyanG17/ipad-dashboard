@@ -189,7 +189,8 @@
 </div></div>
 
 <div id="toast" class="glass"></div>
-<div class="glass" id="keymsg">Add your dashboard key to the address:<br><span class="mono">…vercel.app/?key=YOUR_DASH_KEY</span></div>
+<div class="glass" id="keymsg">Add your dashboard key to the address:<br><span class="mono">…vercel.app/?key=YOUR_DASH_KEY</span><br><br><a href="?demo" class="pill on" style="text-decoration:none">Try the demo instead</a></div>
+<div id="demotag" class="pill on" style="display:none;position:fixed;left:50%;bottom:6px;-webkit-transform:translateX(-50%);transform:translateX(-50%);z-index:4;font-size:12px;padding:5px 12px">Demo · sample data</div>
 
 <script>
 // ===== Settings: change the city to yours =====
@@ -207,9 +208,60 @@ var CITY = 'Varna';
   var m = /[?&]key=([^&]+)/.exec(location.search);
   var KEY = m ? decodeURIComponent(m[1]) : (localStorage.getItem('dashKey') || '');
   if (m) localStorage.setItem('dashKey', KEY);
+  // ?demo runs everything on sample data in the page, so anyone can try it without accounts.
+  var DEMO = /[?&]demo(&|=|$)/.test(location.search);
+  if (DEMO) { KEY = 'demo'; $('demotag').style.display = ''; }
   if (!KEY) $('keymsg').style.display = 'block';
 
+  function art(a, b) {
+    return 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><defs><linearGradient id="g" x2="1" y2="1"><stop offset="0" stop-color="' + a +
+      '"/><stop offset="1" stop-color="' + b + '"/></linearGradient></defs><rect width="10" height="10" fill="url(#g)"/></svg>');
+  }
+  var D = {
+    lights: [{ sku: 'H6056', device: 'D1', name: 'Desk light bars', online: true, on: true, brightness: 80 },
+      { sku: 'H6046', device: 'D2', name: 'Bed bar', online: true, on: false, brightness: 40 }],
+    scenes: ['Sunrise', 'Sunset', 'Aurora', 'Forest', 'Ocean', 'Fire', 'Candlelight', 'Party', 'Romantic', 'Rainbow', 'Starry sky', 'Movie', 'Reading', 'Breathe', 'Lightning']
+      .map(function (n, i) { return { name: n, kind: 'scene', value: { id: i, paramId: i } }; }).concat([{ name: 'My chill', kind: 'diyScene', value: 7 }]),
+    tracks: [['Midnight Drive', 'Sample Artist', '#f2b04a', '#7a2d6b'], ['Neon Harbour', 'The Placeholders', '#0a84ff', '#34c759'], ['Paper Planes', 'Demo Kid', '#ff2d92', '#ff9500']],
+    t: 0, playing: true, progress: 60000, at: Date.now(), shuffle: false, volume: 55, device: 'Living room speaker',
+    playlists: [{ name: 'Liked Songs', sub: 'Your saved tracks', img: null, uri: 'liked' }, { name: 'Gym', sub: 'Playlist · me', img: art('#ff3b30', '#ff9500'), uri: 'spotify:playlist:gym' },
+      { name: 'Chill evening', sub: 'Playlist · me', img: art('#0a84ff', '#bf5af2'), uri: 'spotify:playlist:chill' }, { name: 'Focus', sub: 'Playlist · me', img: art('#34c759', '#0a84ff'), uri: 'spotify:playlist:focus' }],
+    devices: [{ id: 'd1', name: 'Living room speaker', sub: 'Speaker' }, { id: 'd2', name: 'Desktop PC', sub: 'Computer' }, { id: 'd3', name: 'Phone', sub: 'Smartphone' }]
+  };
+  function demoApi(method, path, b) {
+    var q = path.split('?')[1] || '', tr = D.tracks[D.t];
+    if (path.indexOf('/api/sites') === 0) return [{ url: 'https://example.com', up: true, status: 200, ms: 80 + Math.round(Math.random() * 60) }, { url: 'https://github.com', up: true, status: 200, ms: 120 + Math.round(Math.random() * 80) }, { url: 'https://old-project.example', up: false, status: 503 }];
+    if (path.indexOf('/api/govee') === 0) {
+      if (method === 'GET') return q.indexOf('scenes') >= 0 ? D.scenes : JSON.parse(JSON.stringify(D.lights));
+      for (var i = 0; i < D.lights.length; i++) if (D.lights[i].device === b.device) {
+        if (b.action === 'power') D.lights[i].on = !!b.value; else D.lights[i].on = true;
+        if (b.action === 'brightness') D.lights[i].brightness = b.value;
+      }
+      return { ok: true };
+    }
+    if (method === 'GET') {
+      if (q.indexOf('view=playlists') >= 0) return D.playlists;
+      if (q.indexOf('view=devices') >= 0) return D.devices.map(function (d) { return { id: d.id, name: d.name, sub: d.sub + (d.name === D.device ? ' · playing here' : '') }; });
+      if (q.indexOf('view=search') >= 0) return D.tracks.map(function (t, i) { return { name: t[0], sub: 'Song · ' + t[1], img: art(t[2], t[3]), uri: 'spotify:track:' + i }; });
+      var p = D.progress + (D.playing ? Date.now() - D.at : 0);
+      if (p > 200000) { D.t = (D.t + 1) % D.tracks.length; D.progress = 0; D.at = Date.now(); p = 0; tr = D.tracks[D.t]; }
+      return { active: true, playing: D.playing, title: tr[0], artist: tr[1], art: art(tr[2], tr[3]), progress: p, duration: 200000, shuffle: D.shuffle, device: D.device, volume: D.volume };
+    }
+    D.progress += D.playing ? Date.now() - D.at : 0; D.at = Date.now();
+    if (b.action === 'play' || b.action === 'pause') D.playing = b.action === 'play';
+    if (b.action === 'next' || b.action === 'previous' || b.action === 'playUri') {
+      var n = /^spotify:track:(\d)$/.exec(b.uri || '');
+      D.t = n ? +n[1] : (D.t + (b.action === 'previous' ? D.tracks.length - 1 : 1)) % D.tracks.length;
+      D.progress = 0; D.playing = true;
+    }
+    if (b.action === 'volume') D.volume = b.value;
+    if (b.action === 'shuffle') D.shuffle = !!b.value;
+    if (b.action === 'device') for (var k = 0; k < D.devices.length; k++) if (D.devices[k].id === b.id) D.device = D.devices[k].name;
+    return { ok: true };
+  }
+
   function api(method, path, body, cb) {
+    if (DEMO) return setTimeout(function () { cb(null, demoApi(method, path, body)); }, 150);
     var x = new XMLHttpRequest();
     x.open(method, path, true);
     x.timeout = 15000;
