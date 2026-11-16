@@ -76,3 +76,12 @@ assert.match(keyProblem('sb_publishable_abc123'), /publishable/);
 assert.match(keyProblem(jwt('anon')), /publishable/);
 assert.match(keyProblem('hello'), /does not look like/);
 console.log('key check ok');
+
+// Govee music mode
+const { musicModes } = await import('./api/govee.js');
+assert.deepStrictEqual(capability('music', { mode: 5, rgb: 0xff0000 }).value, { musicMode: 5, sensitivity: 100, autoColor: 0, rgb: 0xff0000 });
+assert.deepStrictEqual(capability('music', { mode: 3, sensitivity: 250 }).value, { musicMode: 3, sensitivity: 100, autoColor: 1 });
+assert.strictEqual(capability('music', {}), null);
+assert.deepStrictEqual(musicModes({ capabilities: [{ instance: 'musicMode', parameters: { fields: [{ fieldName: 'musicMode', options: [{ name: 'Energic', value: 5 }, { name: 'Rhythm', value: 3 }] }, { fieldName: 'sensitivity' }] } }] }), [{ name: 'Energic', value: 5 }, { name: 'Rhythm', value: 3 }]);
+assert.deepStrictEqual(musicModes({}), []);
+console.log('music mode check ok');

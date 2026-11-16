@@ -21,6 +21,13 @@ export function capability(action, value) {
     return value && Number.isFinite(value.id) && Number.isFinite(value.paramId)
       ? { type: 'devices.capabilities.dynamic_scene', instance: 'lightScene', value: { id: value.id, paramId: value.paramId } } : null;
   }
+  // The light's own microphone drives it; rgb fixes the colour it pulses in, otherwise the light picks colours itself.
+  if (action === 'music') {
+    if (!value || !Number.isFinite(value.mode)) return null;
+    const v = { musicMode: value.mode, sensitivity: Number.isFinite(value.sensitivity) ? Math.min(100, Math.max(0, Math.round(value.sensitivity))) : 100 };
+    if (Number.isFinite(value.rgb)) { v.autoColor = 0; v.rgb = value.rgb & 0xffffff; } else v.autoColor = 1;
+    return { type: 'devices.capabilities.music_setting', instance: 'musicMode', value: v };
+  }
   if (action === 'diyScene') return Number.isFinite(value) ? { type: 'devices.capabilities.dynamic_scene', instance: 'diyScene', value } : null;
   const v = Number(value);
   if (!Number.isFinite(v)) return null;
@@ -56,6 +63,13 @@ async function scenes(sku, device) {
   return list;
 }
 
+// The music modes a light offers (Energic, Rhythm…), read from its capability list.
+export function musicModes(d) {
+  const cap = (d.capabilities || []).find((c) => c.instance === 'musicMode');
+  const field = cap && cap.parameters && (cap.parameters.fields || []).find((f) => f.fieldName === 'musicMode');
+  return ((field && field.options) || []).filter((o) => Number.isFinite(o.value)).map((o) => ({ name: o.name, value: o.value }));
+}
+
 export async function GET(request) {
   const no = denied(request); if (no) return no;
   if (!process.env.GOVEE_API_KEY) return fail('GOVEE_API_KEY is not set', 503);
@@ -72,7 +86,7 @@ export async function GET(request) {
       devicesAt = Date.now();
     }
     const lights = await Promise.all(devices.map(async (d) => {
-      const base = { sku: d.sku, device: d.device, name: d.deviceName || d.sku };
+      const base = { sku: d.sku, device: d.device, name: d.deviceName || d.sku, music: musicModes(d) };
       try {
         const s = await govee('/device/state', { requestId: crypto.randomUUID(), payload: { sku: d.sku, device: d.device } });
         const caps = s.payload && s.payload.capabilities;
