@@ -1,4 +1,4 @@
-import { denied, fail } from './_lib.js';
+import { denied, fail, log } from './_lib.js';
 
 // Govee Open API. Key: Govee Home app → Profile → Settings → Apply for API Key.
 const BASE = 'https://openapi.api.govee.com/router/api/v1';
@@ -100,6 +100,7 @@ export async function POST(request) {
   if (!cap || typeof b.sku !== 'string' || typeof b.device !== 'string') return fail('Bad request', 400);
   try {
     await govee('/device/control', { requestId: crypto.randomUUID(), payload: { sku: b.sku, device: b.device, capability: cap } });
+    if ((b.action === 'scene' || b.action === 'diyScene') && typeof b.label === 'string' && b.label) await log('scene', b.label);
     return Response.json({ ok: true });
   } catch (e) {
     return fail(e);

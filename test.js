@@ -36,3 +36,33 @@ assert.strictEqual(command({ action: 'nope' }), null);
 console.log('scenes + spotify self-check ok');
 assert.ok(command({ action: 'device', id: 'bf240235-73c9-48e1-b5f3-8c964a313834_amzn_1' }), 'Echo-style device ids are allowed');
 console.log('device id check ok');
+
+// Usage stats
+const { aggregate } = await import('./api/usage.js');
+const now2 = Date.UTC(2026, 10, 16, 15);
+const ev = (kind, name, daysAgo) => ({ kind, name, at: new Date(now2 - daysAgo * 864e5).toISOString() });
+const st = aggregate([ev('song', 'A', 0), ev('song', 'A', 1), ev('song', 'B', 0), ev('scene', 'Aurora', 2), ev('focus', '25', 1), ev('focus', '25', 9)], now2);
+assert.deepStrictEqual(st.songs[0], { name: 'A', count: 2 });
+assert.deepStrictEqual(st.scenes, [{ name: 'Aurora', count: 1 }]);
+assert.strictEqual(st.days.length, 14);
+assert.strictEqual(st.days[13].songs + st.days[12].songs, 3);
+assert.strictEqual(st.focusWeek, 1);
+assert.strictEqual(st.focusMinutes, 25);
+
+// Phone reports
+const { parse } = await import('./api/phone.js');
+assert.deepStrictEqual(parse({ battery: '82', charging: 'Yes' }), [{ key: 'phone.battery', value: { level: 82, charging: true } }]);
+assert.deepStrictEqual(parse({ event: 'home' }), [{ key: 'phone.presence', value: { home: true } }]);
+assert.strictEqual(parse({ battery: 140 }), null);
+assert.strictEqual(parse({ event: 'party' }), null);
+assert.strictEqual(parse({}), null);
+
+// iCloud album helpers
+const { albumToken, albumHost, pick } = await import('./api/photos.js');
+assert.strictEqual(albumToken('https://www.icloud.com/sharedalbum/#B0aGWZuqDGIuXyz'), 'B0aGWZuqDGIuXyz');
+assert.strictEqual(albumToken('not a link!'), null);
+assert.strictEqual(albumHost('B0aGWZuqDGIuXyz'), 'p36-sharedstreams.icloud.com');
+assert.strictEqual(albumHost('A5xyzxyzxyzxyz'), 'p05-sharedstreams.icloud.com');
+assert.strictEqual(pick({ 342: { checksum: 'a', height: '342' }, 1536: { checksum: 'b', height: '1536' }, 2049: { checksum: 'c', height: '2049' } }).checksum, 'b');
+assert.strictEqual(pick({}), null);
+console.log('stats + phone + photos self-check ok');

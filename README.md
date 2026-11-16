@@ -25,6 +25,11 @@ It runs on sample data: every button works, and nothing touches real devices.
 - **Spotify:** now playing with album art and live progress, play/pause/skip, volume, shuffle, your playlists and Liked Songs, search, and moving playback between devices (phone, PC, Echo…).
 - **Weather:** current conditions plus a 5-day forecast from Open-Meteo, with no API key.
 - **Uptime:** a live up/down status and response time for any list of websites.
+- **Lights follow the music:** one tap and the lights take the dominant colour of the current album art, worked out on a canvas in the page.
+- **Focus timer:** a 25/5 Pomodoro timer that turns the lights red while you focus and green on the break, then puts them back the way they were.
+- **Phone status:** an iOS Shortcut reports the phone's battery level and when you arrive home or leave.
+- **Photo frame:** after five idle minutes the dashboard becomes a slideshow of an iCloud Shared Album, with the clock on top. Tap to return.
+- **Usage stats:** every song played, scene picked and focus session finished is logged to a Supabase (Postgres) database; a stats page shows top songs, top scenes and a 14-day activity chart.
 - **Customisable layout:** move, resize and hide every card on the iPad itself. The layout is saved on the device, and cards hide their extras automatically when they get small.
 - **Generated background:** a landscape drawn entirely from text characters on a canvas, created procedurally with value noise, so there are no image assets.
 
@@ -32,11 +37,14 @@ It runs on sample data: every button works, and nothing touches real devices.
 
 ```mermaid
 flowchart LR
-  iPad["iPad mini 2<br/>Safari 12, fullscreen"] -- "x-dash-key" --> V["Vercel functions<br/>/api/govee · /api/spotify · /api/sites"]
+  iPad["iPad mini 2<br/>Safari 12, fullscreen"] -- "x-dash-key" --> V["Vercel functions<br/>/api/govee · /api/spotify · /api/sites<br/>/api/usage · /api/phone · /api/photos"]
   iPad -- "no key needed" --> OM["Open-Meteo<br/>weather"]
   V --> G["Govee Open API"]
   V --> S["Spotify Web API"]
   V --> W["Your websites"]
+  V --> DB[("Supabase<br/>usage log · phone status")]
+  V --> IC["iCloud Shared Album"]
+  Phone["iPhone<br/>iOS Shortcut"] -- "battery · home/away" --> V
 ```
 
 - **The page is one HTML file** with no framework and no build step. It's written in plain ES5 because Safari 12 can't run optional chaining, `??`, flexbox `gap` and similar newer features, and a single one of them breaks the whole page.
@@ -44,6 +52,7 @@ flowchart LR
 - **Spotify uses OAuth with a refresh token.** A one-time `/api/spotify?login` flow produces it, and the server swaps it for short-lived access tokens and caches them.
 - **The Govee API is rate-limited per day**, so the device list and scene lists are cached, and light states are polled once a minute. After you change a light, the UI keeps its own value for a few seconds, because Govee still reports the old state briefly.
 - **Every action is checked on the server.** Spotify URIs, device IDs and Govee commands are matched against an allow-list before anything is sent upstream.
+- **The database is locked down.** Both Supabase tables have row-level security on with no policies, so only the server's secret key can touch them. Two screens showing the dashboard report the same song, so each song event carries a 10-minute dedupe key and a unique index drops the copy.
 - **Deployment:** pushing to `main` deploys to Vercel automatically.
 
 ## Run it yourself
@@ -68,11 +77,30 @@ Open http://localhost:3000/?demo. Node 20 or newer is needed; there are no depen
    | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | From an app at developer.spotify.com. Set its redirect URI to `https://<your-site>/api/spotify` |
    | `SPOTIFY_REFRESH_TOKEN` | Deploy once, open `https://<your-site>/api/spotify?login`, and paste the token it shows |
    | `SITES` | Comma-separated URLs to monitor |
+   | `SUPABASE_URL` / `SUPABASE_SECRET_KEY` | Optional, for usage stats and phone status. Create a free Supabase project, run [`supabase.sql`](supabase.sql) in its SQL Editor, then copy the project URL and the secret key from Settings → API Keys |
+   | `ICLOUD_ALBUM` | Optional, for the photo frame. In Photos, make a Shared Album, turn on **Public Website**, and paste its link |
 
 3. Change `CITY` near the bottom of `index.html` to your city.
 4. On the iPad, open `https://<your-site>/?key=<DASH_KEY>` in Safari, then **Share → Add to Home Screen**. Turn Auto-Lock off, and use Guided Access to lock the iPad to the dashboard.
 
 Playback control needs Spotify Premium; now playing works on free accounts.
+
+### Phone status (iOS Shortcut)
+
+In the Shortcuts app on your iPhone, make an automation for each report. Each one is a single **Get Contents of URL** action:
+
+- **URL:** `https://<your-site>/api/phone`
+- **Method:** POST
+- **Headers:** `x-dash-key` = your `DASH_KEY`
+- **Request Body:** JSON, with the fields from the table
+
+| Automation trigger | JSON fields |
+|---|---|
+| Battery Level (e.g. every change, or a time of day) | `battery` = *Battery Level*, `charging` = *Is Charging* (both from a **Get Battery Level** / **Get Device Details** action) |
+| Arrive at Home | `event` = `home` |
+| Leave Home | `event` = `away` |
+
+Turn off "Ask Before Running" so they run on their own.
 
 ### Local development
 
@@ -89,7 +117,11 @@ index.html        the whole dashboard: layout, UI, background renderer
 api/govee.js      lights: state, control, scenes
 api/spotify.js    playback, browsing, OAuth login
 api/sites.js      uptime checks
-api/_lib.js       shared dashboard-key check
+api/usage.js      usage log and stats (Supabase)
+api/phone.js      phone battery and presence, reported by an iOS Shortcut
+api/photos.js     photo list from an iCloud Shared Album
+supabase.sql      the two database tables
+api/_lib.js       shared dashboard-key check and database helper
 dev.js            local server that runs api/* like Vercel does
 test.js           assert-based self-checks
 local-claude/     the first version: a LAN-only dashboard for Claude Code token usage

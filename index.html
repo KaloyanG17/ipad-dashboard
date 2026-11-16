@@ -97,10 +97,38 @@
   .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #7ee2a8; margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 8px rgba(126,226,168,.7); }
   .dot.down { background: #ff7a7a; box-shadow: 0 0 8px rgba(255,122,122,.8); }
 
+  /* phone */
+  #pbat { font-size: 40px; font-weight: 200; line-height: 1; margin-right: 12px; }
+  .batt { height: 8px; border-radius: 4px; background: rgba(255,255,255,.15); overflow: hidden; margin-bottom: 5px; }
+  .batt i { display: block; height: 100%; border-radius: 4px; background: #7ee2a8; }
+
+  /* focus timer */
+  #ftime { font-size: 34px; font-weight: 300; margin-right: 14px; }
+  .flat { margin-bottom: 0; }
+  #card-focus.focus { border-color: rgba(255, 90, 70, .7); }
+  #card-focus.break { border-color: rgba(126, 226, 168, .7); }
+
+  /* stats */
+  .fill { height: 100%; background: #f2b04a; border-radius: 3px; }
+  .chart { height: 180px; -webkit-align-items: flex-end; align-items: flex-end; margin-top: 16px; }
+  .chart .colx { -webkit-flex: 1; flex: 1; margin: 0 4px; height: 100%; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-justify-content: flex-end; justify-content: flex-end; text-align: center; }
+  .chart .colx i { display: block; background: #f3a9bd; border-radius: 4px 4px 1px 1px; min-height: 2px; }
+  .chart .colx span { font-size: 11px; margin-top: 5px; }
+
+  /* photo frame (idle slideshow) */
+  #frame { display: none; position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 40; background: #000; }
+  .ph { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: center / cover no-repeat; opacity: 0; -webkit-transition: opacity 1.5s; transition: opacity 1.5s; }
+  .ph.show { opacity: 1; }
+  #frameinfo { position: absolute; left: 36px; bottom: 28px; right: 36px; text-shadow: 0 2px 18px rgba(0,0,0,.85), 0 0 4px rgba(0,0,0,.5); }
+  #fclock { font-size: 96px; font-weight: 200; line-height: 1; letter-spacing: -0.02em; }
+  #fdate { font-size: 20px; margin-top: 6px; }
+  #fsong { font-size: 15px; margin-top: 8px; color: rgba(255,255,255,.85); }
+
   /* layout editing */
-  #gear { position: fixed; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.08); z-index: 5;
+  #gear, #statsbtn { position: fixed; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.08); z-index: 5;
     display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
-  #gear svg { width: 18px; height: 18px; fill: rgba(244,239,230,.5); }
+  #statsbtn { right: 50px; }
+  #gear svg, #statsbtn svg { width: 18px; height: 18px; fill: rgba(244,239,230,.5); }
   .edit { display: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0; z-index: 3; background: rgba(4,14,26,.72); border-radius: inherit;
     -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center;
     -webkit-align-content: center; align-content: center; padding: 4px; box-sizing: border-box; }
@@ -149,13 +177,18 @@
     <div class="row days" id="days"></div>
   </div>
 
+  <div class="card glass" id="card-phone">
+    <div class="label" style="margin-bottom:10px">Phone</div>
+    <div id="phone"><div class="dim small">Loading…</div></div>
+  </div>
+
   <div class="card glass col" id="card-lights">
     <div class="row"><div class="label grow">Lights</div><span class="pill" id="allon">All on</span><span class="pill" id="alloff">All off</span></div>
     <div id="lights" class="scroll grow"><div class="dim" style="margin-top:10px">Loading…</div></div>
   </div>
 
   <div class="card glass col" id="card-music">
-    <div class="row" style="margin-bottom:10px"><div class="label grow">Spotify</div><span class="pill" id="browse" style="margin:0">Browse</span></div>
+    <div class="row" style="margin-bottom:10px"><div class="label grow">Spotify</div><span class="pill" id="sync" style="margin:0 8px 0 0">Sync lights</span><span class="pill" id="browse" style="margin:0">Browse</span></div>
     <div class="row" style="-webkit-align-items:flex-start;align-items:flex-start">
       <div id="art"></div>
       <div class="grow"><div id="title" class="ellipsis">–</div><div id="artist" class="dim ellipsis"></div>
@@ -173,6 +206,15 @@
     </div>
   </div>
 
+  <div class="card glass row" id="card-focus">
+    <div class="label" style="margin-right:16px">Focus</div>
+    <div id="ftime" class="mono">25:00</div>
+    <div id="fphase" class="dim small grow ellipsis">Ready</div>
+    <span class="pill flat ellipsis" id="flight" style="max-width:150px">All lights</span>
+    <span class="pill flat on" id="fgo">Start</span>
+    <span class="pill flat" id="freset" style="margin-right:0">Reset</span>
+  </div>
+
   <div class="card glass row" id="card-sites" style="-webkit-flex-wrap:wrap;flex-wrap:wrap">
     <div class="label" style="margin-right:18px">Sites</div>
     <div id="sites" class="row grow" style="-webkit-flex-wrap:wrap;flex-wrap:wrap"><span class="dim">Loading…</span></div>
@@ -180,7 +222,13 @@
 </div>
 
 <div id="gear"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.3 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1L11 21h4l.3-2.9c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5-2.1-1.6zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></div>
+<div id="statsbtn"><svg viewBox="0 0 24 24"><path d="M4 20V10h4v10H4zm6 0V4h4v16h-4zm6 0v-7h4v7h-4z"/></svg></div>
 <div id="editbar" class="glass"></div>
+
+<div id="frame">
+  <div class="ph" id="ph0"></div><div class="ph" id="ph1"></div>
+  <div id="frameinfo"><div id="fclock"></div><div id="fdate"></div><div id="fsong" class="ellipsis"></div></div>
+</div>
 
 <div id="sheet"><div class="sheet-in glass">
   <div class="row"><div class="sheet-title" id="sheettitle"></div><div class="row grow" id="tabs"></div><div id="sheetx">✕</div></div>
@@ -226,10 +274,19 @@ var CITY = 'Varna';
     t: 0, playing: true, progress: 60000, at: Date.now(), shuffle: false, volume: 55, device: 'Living room speaker',
     playlists: [{ name: 'Liked Songs', sub: 'Your saved tracks', img: null, uri: 'liked' }, { name: 'Gym', sub: 'Playlist · me', img: art('#ff3b30', '#ff9500'), uri: 'spotify:playlist:gym' },
       { name: 'Chill evening', sub: 'Playlist · me', img: art('#0a84ff', '#bf5af2'), uri: 'spotify:playlist:chill' }, { name: 'Focus', sub: 'Playlist · me', img: art('#34c759', '#0a84ff'), uri: 'spotify:playlist:focus' }],
-    devices: [{ id: 'd1', name: 'Living room speaker', sub: 'Speaker' }, { id: 'd2', name: 'Desktop PC', sub: 'Computer' }, { id: 'd3', name: 'Phone', sub: 'Smartphone' }]
+    devices: [{ id: 'd1', name: 'Living room speaker', sub: 'Speaker' }, { id: 'd2', name: 'Desktop PC', sub: 'Computer' }, { id: 'd3', name: 'Phone', sub: 'Smartphone' }],
+    phone: { battery: { level: 82, charging: false, at: Date.now() - 12 * 60000 }, presence: { home: true, at: Date.now() - 2 * 3600000 } },
+    photos: ['mountain', 'harbour', 'forest', 'city', 'desert', 'coast'].map(function (x) { return 'https://picsum.photos/seed/' + x + '/1600/1200'; }),
+    stats: { songs: [['Midnight Drive — Sample Artist', 42], ['Neon Harbour — The Placeholders', 31], ['Paper Planes — Demo Kid', 24], ['Slow Tide — Sample Artist', 17], ['Glass Rooms — Demo Kid', 9]].map(function (x) { return { name: x[0], count: x[1] }; }),
+      scenes: [['Aurora', 18], ['Sunset', 14], ['Movie', 11], ['Reading', 7], ['My chill', 5]].map(function (x) { return { name: x[0], count: x[1] }; }),
+      days: [6, 9, 4, 12, 15, 8, 3, 10, 14, 7, 11, 18, 9, 13].map(function (c, i) { return { day: new Date(Date.now() - (13 - i) * 864e5).toISOString().slice(5, 10), songs: c }; }),
+      focusWeek: 6, focusMinutes: 150, total: 178 }
   };
   function demoApi(method, path, b) {
     var q = path.split('?')[1] || '', tr = D.tracks[D.t];
+    if (path.indexOf('/api/usage') === 0) return method === 'GET' ? D.stats : { ok: true };
+    if (path.indexOf('/api/phone') === 0) return D.phone;
+    if (path.indexOf('/api/photos') === 0) return D.photos;
     if (path.indexOf('/api/sites') === 0) return [{ url: 'https://example.com', up: true, status: 200, ms: 80 + Math.round(Math.random() * 60) }, { url: 'https://github.com', up: true, status: 200, ms: 120 + Math.round(Math.random() * 80) }, { url: 'https://old-project.example', up: false, status: 503 }];
     if (path.indexOf('/api/govee') === 0) {
       if (method === 'GET') return q.indexOf('scenes') >= 0 ? D.scenes : JSON.parse(JSON.stringify(D.lights));
@@ -343,8 +400,8 @@ var CITY = 'Varna';
   var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { drawBg(); markCompact(); }, 300); });
 
   // ---------- Layout: card order, width (of 12 columns), height (rows) and visibility, saved on this device ----------
-  var NAMES = { clock: 'Clock', weather: 'Weather', lights: 'Lights', music: 'Spotify', sites: 'Sites' };
-  var DEFAULT = [{ id: 'clock', w: 5, h: 2 }, { id: 'weather', w: 7, h: 2 }, { id: 'lights', w: 7, h: 5 }, { id: 'music', w: 5, h: 5 }, { id: 'sites', w: 12, h: 1 }];
+  var NAMES = { clock: 'Clock', weather: 'Weather', phone: 'Phone', lights: 'Lights', music: 'Spotify', focus: 'Focus', sites: 'Sites' };
+  var DEFAULT = [{ id: 'clock', w: 4, h: 2 }, { id: 'weather', w: 5, h: 2 }, { id: 'phone', w: 3, h: 2 }, { id: 'lights', w: 7, h: 4 }, { id: 'music', w: 5, h: 5 }, { id: 'focus', w: 7, h: 1 }, { id: 'sites', w: 12, h: 1 }];
   var layout;
   try { layout = JSON.parse(localStorage.getItem('layout')); } catch (e) {}
   if (!layout || layout.length !== DEFAULT.length) layout = JSON.parse(JSON.stringify(DEFAULT));
@@ -383,7 +440,7 @@ var CITY = 'Varna';
     var bar = '<span class="dim small" style="margin-right:8px">Hidden:</span>', any = false;
     for (var k = 0; k < layout.length; k++) if (layout[k].hidden) { any = true; bar += '<span class="pill" data-show="' + k + '">+ ' + NAMES[layout[k].id] + '</span>'; }
     if (!any) bar += '<span class="dim small" style="margin-right:12px">none</span>';
-    $('editbar').innerHTML = bar + '<span class="pill" data-reset="1">Reset</span><span class="pill on" data-done="1">Done</span>';
+    $('editbar').innerHTML = bar + '<span class="pill" data-frame="1">Slideshow</span><span class="pill" data-reset="1">Reset</span><span class="pill on" data-done="1">Done</span>';
     setTimeout(markCompact, 0);
   }
   applyLayout();
@@ -410,6 +467,7 @@ var CITY = 'Varna';
     if (t.getAttribute('data-show')) { layout[+t.getAttribute('data-show')].hidden = false; applyLayout(); }
     if (t.getAttribute('data-reset')) { layout = JSON.parse(JSON.stringify(DEFAULT)); applyLayout(); }
     if (t.getAttribute('data-done')) document.body.classList.remove('editing');
+    if (t.getAttribute('data-frame')) { document.body.classList.remove('editing'); if (!startFrame()) toast('No photos yet: set ICLOUD_ALBUM (see README)'); }
   });
 
   // ---------- Sheet: full-screen panel with tabs, a tools row and a scrolling list ----------
@@ -457,6 +515,7 @@ var CITY = 'Varna';
     var d = new Date();
     $('clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
     $('date').textContent = DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+    $('fclock').textContent = $('clock').textContent; $('fdate').textContent = $('date').textContent;
   }
   tick(); setInterval(tick, 1000);
 
@@ -552,7 +611,7 @@ var CITY = 'Varna';
     if (action !== 'power' && action !== 'brightness') L.scene = label || '';
     if (action !== 'power' && !L.on) L.on = true;
     renderLights();
-    api('POST', '/api/govee', { sku: L.sku, device: L.device, action: action, value: value }, function (err) {
+    api('POST', '/api/govee', { sku: L.sku, device: L.device, action: action, value: value, label: label }, function (err) {
       if (err) { hold[L.device] = 0; toast(err); loadLights(); }
       else if (label) toast(L.name + ': ' + label);
     });
@@ -614,7 +673,7 @@ var CITY = 'Varna';
   loadLights(); setInterval(loadLights, 60000);
 
   // ---------- Spotify ----------
-  var song = null, songAt = 0, volDragging = false;
+  var song = null, songAt = 0, volDragging = false, lastSong = '', syncOn = localStorage.getItem('sync') === '1';
   var PLAY = 'M8 5v14l11-7z', PAUSE = 'M6 5h4v14H6zM14 5h4v14h-4z';
   function mmss(ms) { var s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + pad(s % 60); }
   function drawProgress() {
@@ -628,6 +687,7 @@ var CITY = 'Varna';
     $('title').textContent = on ? song.title : 'Nothing playing';
     $('artist').textContent = on ? song.artist : 'Tap Browse to pick something';
     $('device').textContent = on && song.device ? 'On ' + song.device : '';
+    $('fsong').textContent = on && song.playing ? '♪ ' + song.title + ' — ' + song.artist : '';
     $('art').style.backgroundImage = on && song.art ? 'url(' + song.art + ')' : 'none';
     $('ppicon').setAttribute('d', on && song.playing ? PAUSE : PLAY);
     $('pp').setAttribute('data-a', on && song.playing ? 'pause' : 'play');
@@ -643,6 +703,12 @@ var CITY = 'Varna';
       $('merr').textContent = err || '';
       if (err) return;
       song = d; songAt = Date.now(); renderSong();
+      var id = d.active ? (d.title + ' — ' + d.artist).slice(0, 120) : '';
+      if (d.active && d.playing && id !== lastSong) {
+        lastSong = id;
+        api('POST', '/api/usage', { kind: 'song', name: id }, function () {});
+        if (syncOn) syncLights();
+      }
     });
   }
   function spotify(body, done) {
@@ -699,6 +765,186 @@ var CITY = 'Varna';
   $('browse').addEventListener('click', function () { openMusicSheet(); });
   $('devbtn').addEventListener('click', function () { openMusicSheet('devices'); });
   loadSong(); setInterval(loadSong, 5000); setInterval(drawProgress, 1000);
+
+  // ---------- Lights follow the music: tint the lights with the album art's dominant colour ----------
+  function artColour(url, cb) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () {
+      try {
+        var c = document.createElement('canvas'); c.width = c.height = 24;
+        var x = c.getContext('2d'); x.drawImage(img, 0, 0, 24, 24);
+        var p = x.getImageData(0, 0, 24, 24).data, r = 0, g = 0, b = 0, w = 0;
+        for (var i = 0; i < p.length; i += 4) { // colourful pixels count far more than grey ones
+          var k = Math.pow(Math.max(p[i], p[i + 1], p[i + 2]) - Math.min(p[i], p[i + 1], p[i + 2]), 2) + 1;
+          r += p[i] * k; g += p[i + 1] * k; b += p[i + 2] * k; w += k;
+        }
+        r /= w; g /= w; b /= w;
+        var lo = Math.min(r, g, b) * 0.7; r -= lo; g -= lo; b -= lo; // LEDs look washed out unless the colour is pushed
+        var sc = 255 / Math.max(r, g, b, 1);
+        cb((Math.round(r * sc) << 16) | (Math.round(g * sc) << 8) | Math.round(b * sc));
+      } catch (e) { cb(null); }
+    };
+    img.onerror = function () { cb(null); };
+    img.src = url;
+  }
+  function syncLights() {
+    if (!song || !song.active || !song.art) return;
+    artColour(song.art, function (rgb) {
+      if (rgb === null) return;
+      for (var i = 0; i < lights.length; i++) if (lights[i].online && lights[i].on) control(lights[i], 'color', rgb, 'Music sync');
+    });
+  }
+  function renderSync() { $('sync').className = 'pill' + (syncOn ? ' on' : ''); }
+  $('sync').addEventListener('click', function () {
+    syncOn = !syncOn; localStorage.setItem('sync', syncOn ? '1' : '0'); renderSync();
+    toast(syncOn ? 'Lights that are on will follow the album art' : 'Music sync off');
+    if (syncOn) syncLights();
+  });
+  renderSync();
+
+  // ---------- Phone status (reported by an iOS Shortcut) ----------
+  function ago(t) {
+    var m = Math.round((Date.now() - t) / 60000);
+    return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago';
+  }
+  function loadPhone() {
+    if (!KEY) return;
+    api('GET', '/api/phone', null, function (err, d) {
+      if (err) { $('phone').innerHTML = '<div class="err" style="margin:0">' + esc(err) + '</div>'; return; }
+      var b = d.battery, p = d.presence, h = '';
+      if (b) h += '<div class="row"><div id="pbat">' + b.level + '%</div><div class="grow"><div class="batt"><i style="width:' + b.level + '%;background:' +
+        (b.level <= 20 ? '#ff7a7a' : b.level <= 40 ? '#f2b04a' : '#7ee2a8') + '"></i></div><div class="dim small ellipsis">' + (b.charging ? '⚡ Charging · ' : '') + ago(b.at) + '</div></div></div>';
+      if (p) { var t = new Date(p.at); h += '<div style="margin-top:10px">' + (p.home ? '🏠 Home' : '🚶 Away') + ' <span class="dim small">since ' + pad(t.getHours()) + ':' + pad(t.getMinutes()) + '</span></div>'; }
+      $('phone').innerHTML = h || '<div class="dim small">No reports yet. Set up the iOS Shortcut from the README.</div>';
+    });
+  }
+  loadPhone(); setInterval(loadPhone, 60000);
+
+  // ---------- Focus timer: lights go red while you focus, green on the break ----------
+  var FOCUS_MIN = 25, BREAK_MIN = 5, F;
+  try { F = JSON.parse(localStorage.getItem('focus')); } catch (e) {}
+  if (!F || !F.phase) F = { phase: 'idle', target: 'all' };
+  function fsave() { localStorage.setItem('focus', JSON.stringify(F)); }
+  function ftargets() {
+    var out = [];
+    for (var i = 0; i < lights.length; i++) if (lights[i].online && (F.target === 'all' || F.target === lights[i].device)) out.push(lights[i]);
+    return out;
+  }
+  function fphase(phase) {
+    var t = ftargets(), i;
+    if (phase === 'focus' && !F.saved) { F.saved = {}; for (i = 0; i < t.length; i++) F.saved[t[i].device] = t[i].on ? (t[i].color || -1) : 0; }
+    F.phase = phase; F.left = null;
+    F.endsAt = Date.now() + (phase === 'focus' ? FOCUS_MIN : BREAK_MIN) * 60000;
+    for (i = 0; i < t.length; i++) control(t[i], 'color', phase === 'focus' ? 0xff2a1a : 0x34c759, phase === 'focus' ? 'Focus' : 'Break');
+    fsave();
+  }
+  function fstop() { // put the lights back the way they were
+    var t = ftargets(), saved = F.saved || {};
+    if (F.phase !== 'idle') for (var i = 0; i < t.length; i++) {
+      var was = saved[t[i].device];
+      if (was === 0) { t[i].on = false; control(t[i], 'power', 0); }
+      else if (was > 0) control(t[i], 'color', was);
+      else control(t[i], 'colorTemp', 2700);
+    }
+    F = { phase: 'idle', target: F.target }; fsave();
+  }
+  function ftick() {
+    var paused = F.phase !== 'idle' && F.left != null;
+    var left = F.phase === 'idle' ? FOCUS_MIN * 60000 : paused ? F.left : F.endsAt - Date.now();
+    if (F.phase !== 'idle' && !paused && left <= 0) {
+      if (F.phase === 'focus') { api('POST', '/api/usage', { kind: 'focus', name: String(FOCUS_MIN) }, function () {}); toast('Focus done. Take a break'); fphase('break'); }
+      else { toast('Break over'); fstop(); }
+      return ftick();
+    }
+    var sec = Math.ceil(left / 1000);
+    $('ftime').textContent = pad(Math.floor(sec / 60)) + ':' + pad(sec % 60);
+    $('fphase').textContent = F.phase === 'idle' ? 'Ready · ' + FOCUS_MIN + '/' + BREAK_MIN + ' min' : (F.phase === 'focus' ? 'Focusing' : 'Break') + (paused ? ' · paused' : '');
+    $('fgo').textContent = F.phase === 'idle' ? 'Start' : paused ? 'Resume' : 'Pause';
+    $('card-focus').classList.remove('focus', 'break');
+    if (F.phase !== 'idle') $('card-focus').classList.add(F.phase);
+    var name = 'All lights';
+    if (F.target === 'none') name = 'No lights';
+    for (var i = 0; i < lights.length; i++) if (lights[i].device === F.target) name = lights[i].name;
+    $('flight').textContent = name;
+  }
+  $('fgo').addEventListener('click', function () {
+    if (F.phase === 'idle') fphase('focus');
+    else if (F.left != null) { F.endsAt = Date.now() + F.left; F.left = null; fsave(); }
+    else { F.left = F.endsAt - Date.now(); fsave(); }
+    ftick();
+  });
+  $('freset').addEventListener('click', function () { fstop(); ftick(); });
+  $('flight').addEventListener('click', function () {
+    if (F.phase !== 'idle') return toast('Reset the timer to change its light');
+    var opts = ['all'];
+    for (var i = 0; i < lights.length; i++) opts.push(lights[i].device);
+    opts.push('none');
+    F.target = opts[(opts.indexOf(F.target) + 1) % opts.length]; fsave(); ftick();
+  });
+  ftick(); setInterval(ftick, 1000);
+
+  // ---------- Usage stats ----------
+  function openStats() {
+    var data = null;
+    openSheet('Usage · last 30 days', [{ id: 'songs', label: 'Top songs' }, { id: 'scenes', label: 'Top scenes' }, { id: 'days', label: 'Activity' }], function (tab) {
+      if (!data) {
+        loading();
+        return api('GET', '/api/usage', null, function (err, d) {
+          if (err) return sheetError(err);
+          data = d; if ($('sheet').className === 'open') showTab(sheet.tab);
+        });
+      }
+      var h = '', i, max;
+      if (tab === 'days') {
+        max = 1;
+        for (i = 0; i < data.days.length; i++) max = Math.max(max, data.days[i].songs);
+        for (i = 0; i < data.days.length; i++) h += '<div class="colx"><span class="dim">' + (data.days[i].songs || '') + '</span><i style="height:' + Math.round(data.days[i].songs / max * 80) + '%"></i><span class="dim mono">' + data.days[i].day.slice(3) + '</span></div>';
+        $('sheetbody').innerHTML = '<div class="label">Songs played per day · last 14 days</div><div class="row chart">' + h + '</div>' +
+          '<div style="margin-top:22px">Focus this week: <b>' + data.focusWeek + '</b> session' + (data.focusWeek === 1 ? '' : 's') + ' · <b>' + data.focusMinutes + '</b> min</div>' +
+          '<div class="dim small" style="margin-top:6px">' + data.total + ' events logged in the last 30 days</div>';
+        return;
+      }
+      var rows = data[tab];
+      max = rows.length ? rows[0].count : 1;
+      for (i = 0; i < rows.length; i++) h += '<div class="item"><div class="row"><div class="grow ellipsis">' + esc(rows[i].name) + '</div><span class="mono dim">' + rows[i].count + '</span></div>' +
+        '<div class="track" style="margin-top:6px"><div class="fill" style="width:' + Math.round(rows[i].count / max * 100) + '%"></div></div></div>';
+      $('sheetbody').innerHTML = h || '<div class="dim" style="padding:12px 4px">Nothing logged yet. ' + (tab === 'songs' ? 'Play some music' : 'Pick a scene from Themes') + ' and it shows up here.</div>';
+    });
+  }
+  $('statsbtn').addEventListener('click', openStats);
+
+  // ---------- Photo frame: after a few idle minutes, a slideshow with the clock on top ----------
+  var IDLE_MIN = 5, photos = [], frameOn = false, frameI = 0, frameT, idleT;
+  function loadPhotos() {
+    if (!KEY) return;
+    api('GET', '/api/photos', null, function (err, d) { if (!err && d && d.length) photos = d; });
+  }
+  function nextPhoto() {
+    if (!frameOn || !photos.length) return;
+    var url = photos[frameI % photos.length], img = new Image();
+    img.onload = function () { // swap only once the next photo has loaded, so there is never a blank frame
+      if (!frameOn) return;
+      var show = $('ph' + (frameI % 2)), hide = $('ph' + ((frameI + 1) % 2));
+      show.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
+      show.className = 'ph show'; hide.className = 'ph';
+      frameI++;
+    };
+    img.onerror = function () { frameI++; };
+    img.src = url;
+  }
+  function startFrame() {
+    if (frameOn) return true;
+    if (!photos.length || $('sheet').className === 'open' || document.body.classList.contains('editing')) return false;
+    frameOn = true; $('frame').style.display = 'block';
+    nextPhoto(); frameT = setInterval(nextPhoto, 20000);
+    return true;
+  }
+  function stopFrame() { frameOn = false; clearInterval(frameT); $('frame').style.display = 'none'; }
+  function idle() { clearTimeout(idleT); idleT = setTimeout(startFrame, IDLE_MIN * 60000); }
+  ['touchstart', 'mousedown', 'keydown'].forEach(function (ev) { document.addEventListener(ev, idle, true); });
+  $('frame').addEventListener('click', function () { stopFrame(); idle(); });
+  loadPhotos(); setInterval(loadPhotos, 25 * 60000); idle();
 
   // ---------- Sites ----------
   function loadSites() {
