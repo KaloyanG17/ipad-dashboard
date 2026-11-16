@@ -85,6 +85,8 @@ export async function GET(request) {
       devices = ((await govee('/user/devices')).data || []).filter((d) => d.type === 'devices.types.light');
       devicesAt = Date.now();
     }
+    // ?caps=1: what each light says it can do, for working out why a feature is missing
+    if (q.has('caps')) return Response.json(devices.map((d) => ({ name: d.deviceName, sku: d.sku, capabilities: d.capabilities })));
     const lights = await Promise.all(devices.map(async (d) => {
       const base = { sku: d.sku, device: d.device, name: d.deviceName || d.sku, music: musicModes(d) };
       try {
