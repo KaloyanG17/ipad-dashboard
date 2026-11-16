@@ -16,8 +16,8 @@ It runs on sample data: every button works, and nothing touches real devices.
 | Any colour, warm/cool white | Govee scenes | Resizable layout |
 |---|---|---|
 | ![Colour picker](docs/colour.png) | ![Govee scenes](docs/themes.png) | ![Edit layout](docs/edit-layout.png) |
-| **Your playlists** | **Search** | **Move playback between devices** |
-| ![Spotify playlists](docs/spotify-browse.png) | ![Spotify search](docs/search.png) | ![Spotify devices](docs/devices.png) |
+| **Your playlists** | **Search** | **Usage stats** |
+| ![Spotify playlists](docs/spotify-browse.png) | ![Spotify search](docs/search.png) | ![Usage stats](docs/stats.png) |
 
 ## Features
 
@@ -25,14 +25,15 @@ It runs on sample data: every button works, and nothing touches real devices.
 - **Spotify:** now playing with album art and live progress, play/pause/skip, volume, shuffle, your playlists and Liked Songs, search, and moving playback between devices (phone, PC, Echo…).
 - **Weather:** current conditions plus a 5-day forecast from Open-Meteo, with no API key.
 - **Uptime:** a live up/down status and response time for any list of websites.
-- **Moods:** thirteen one-tap colourways (Sunset, Ocean, Cyberpunk, Candle…) that deal their colours out across all the lights and set the brightness to match.
+- **Moods:** twenty-four one-tap colourways in three sets (Vivid, Soft and White) that deal their colours out across all the lights and set the brightness to match.
 - **Lights follow the music:** one tap and the lights take the dominant colour of the current album art, worked out on a canvas in the page.
 - **Focus timer:** a 25/5 Pomodoro timer that turns the lights red while you focus and green on the break, then puts them back the way they were.
 - **Phone status:** an iOS Shortcut reports the phone's battery level and when you arrive home or leave.
 - **Photo frame:** after five idle minutes the dashboard becomes a slideshow of an iCloud Shared Album, with the clock on top. Tap to return.
 - **Usage stats:** every song played, scene picked and focus session finished is logged to a Supabase (Postgres) database; a stats page shows top songs, top scenes and a 14-day activity chart.
 - **Customisable layout:** move, resize and hide every card on the iPad itself. The layout is saved on the device, and cards hide their extras automatically when they get small.
-- **Generated background:** a landscape drawn entirely from text characters on a canvas, created procedurally with value noise, so there are no image assets.
+- **iOS-style design:** Apple's dark system colours, SF type, translucent materials, iOS switches, filled sliders, segmented controls and form sheets, all in plain CSS that Safari 12 can run.
+- **Generated wallpapers:** a soft colour mesh, or a landscape drawn entirely from text characters with value noise. Both are drawn on a canvas, so there are no image assets.
 
 ## How it works
 
