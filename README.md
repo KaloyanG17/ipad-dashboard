@@ -1,4 +1,12 @@
-# iPad Dashboard
+<a href="https://kaloyan-ipad.vercel.app/?demo"><img src="docs/cover.jpg" alt="iPad Dashboard: a smart-home wall dashboard for an old iPad stuck on iOS 12" width="100%"></a>
+
+<p align="center">
+  <a href="https://kaloyan-ipad.vercel.app/?demo"><img src="https://img.shields.io/badge/Live%20demo-sample%20data-4ADE80?style=for-the-badge&logo=vercel&logoColor=black&labelColor=2B1F8F" alt="Live demo"></a>
+  <img src="https://img.shields.io/badge/JavaScript-ES5-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black&labelColor=2B1F8F" alt="JavaScript">
+  <img src="https://img.shields.io/badge/Vercel%20Functions-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel Functions">
+  <img src="https://img.shields.io/badge/Spotify%20API-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Spotify API">
+  <img src="https://img.shields.io/badge/License-MIT-555555?style=for-the-badge&labelColor=2B1F8F" alt="License">
+</p>
 
 **Turning a 2013 iPad mini that Apple stopped updating years ago into a smart-home wall panel.**
 
@@ -19,7 +27,7 @@ It runs on sample data: every button works, and nothing touches real devices.
 | **Your playlists** | **Search** | **Usage stats** |
 | ![Spotify playlists](docs/spotify-browse.png) | ![Spotify search](docs/search.png) | ![Usage stats](docs/stats.png) |
 
-## Features
+## 01 · Features
 
 - **Govee lights:** on/off, brightness, quick colours, any colour from a hue slider, warm/cool white, every built-in scene and your own DIY scenes, and all-on/all-off.
 - **Spotify:** now playing with album art and live progress, play/pause/skip, volume, shuffle, your playlists and Liked Songs, search, and moving playback between devices (phone, PC, Echo…).
@@ -35,7 +43,7 @@ It runs on sample data: every button works, and nothing touches real devices.
 - **iOS-style design:** Apple's dark system colours, SF type, translucent materials, iOS switches, filled sliders, segmented controls and form sheets, all in plain CSS that Safari 12 can run.
 - **Generated wallpapers:** a soft colour mesh, or a landscape drawn entirely from text characters with value noise. Both are drawn on a canvas, so there are no image assets.
 
-## How it works
+## 02 · How it works
 
 ```mermaid
 flowchart LR
@@ -57,7 +65,7 @@ flowchart LR
 - **The database is locked down.** Both Supabase tables have row-level security on with no policies, so only the server's secret key can touch them. Two screens showing the dashboard report the same song, so each song event carries a 10-minute dedupe key and a unique index drops the copy.
 - **Deployment:** pushing to `main` deploys to Vercel automatically.
 
-## Run it yourself
+## 03 · Run it yourself
 
 ### Try the UI with sample data (no accounts needed)
 
@@ -112,7 +120,7 @@ npm run dev                  # http://localhost:3000/?key=<DASH_KEY>
 npm test                     # self-checks for the API validation
 ```
 
-## Project structure
+## 04 · Project structure
 
 ```
 index.html        the whole dashboard: layout, UI, background renderer
@@ -132,3 +140,7 @@ local-claude/     the first version: a LAN-only dashboard for Claude Code token 
 ## License
 
 [MIT](LICENSE)
+
+---
+
+<p align="center"><sub>Designed and built by <a href="https://github.com/KaloyanG17">Kaloyan Gaydarov</a> · <a href="https://www.linkedin.com/in/kaloyan-gaydarov/">LinkedIn</a></sub></p>
